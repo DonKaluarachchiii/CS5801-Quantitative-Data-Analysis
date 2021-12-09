@@ -1,0 +1,1959 @@
+---
+title: "CS5801 Quantitative Data Analysis (2020.21)"
+author: "1736500"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_notebook
+version: 1.0
+---
+
+# Table of Contents
+
+### 1 [Organise and Clean the Data](#H1)
+1.1 [Subset the data into the specific dataset allocated](#H11)
+
+1.2 [Data quality analysis](#H12)
+
+1.3 [Data cleaning](#H13)
+
+### 2 [Exploratory Data Analysis (EDA)](#H2)
+2.1 [EDA plan](#H21)
+
+2.2 [EDA and summary of results](#H22)
+
+2.3 [Additional insights and issues](#H23)
+
+### 3 [Modelling](#H3)
+3.1 [Build a model for player salary](#H31)
+
+3.2 [Critique model using relevant diagnostics](#H32)
+
+3.3 [Suggest improvements to your model](#H33)
+
+### 4 [Extension Work](#H4)
+4.1 [Model the likelihood of a player having scored a Hit (using the hit.ind variable provided)](#H41)
+
+# Installing and Loading Packages
+
+```{r}
+# Installing 'ggplot2' - a data visualisation package.
+#install.packages("ggplot2")
+# Loading the 'ggplot2' library.
+library(ggplot2)
+
+# Installing 'dplyr'.
+#install.packages("dplyr")
+# Loading the 'dplyr' library.
+library(dplyr)
+
+# Installing 'VIM'.
+#install.packages("VIM")
+# Loading the 'VIM' library.
+library(VIM)
+
+# Installing 'validate'.
+#install.packages("validate")
+# Loading the 'validate' library.
+library(validate)
+
+# Installing 'tree'.
+#install.packages("tree")
+# Loading the 'tree' library.
+library(tree)
+
+# Installing 'mgcv'.
+#install.packages("mgcv")
+# Loading the 'mgcv' library.
+library(mgcv)
+
+# Installing 'tidyverse' - a core package which contains a set of functions designed to enable dataframe manipulation.
+#install.packages("tidyverse")
+# Loading the 'tidyverse' library.
+#library(tidyverse)
+```
+
+# 1. Organise and Clean the Data {#H1}
+
+## 1.1 Subset the data into the specific dataset allocated {#H11}
+
+When given a dataset as an rda object, it can be reloaded using the ‘load’ function. This can either be done by loading the dataset from the GitHub repository or by saving the dataset and loading it from the local drive. The R code used for both methods is available below – with the code used for the second method being commented out. 
+
+The guidance given will be used to select two teams to create a subset of the data (which in this instance are the Boston Red Sox and Texas Rangers).
+
+```{r}
+# Loading from GitHub repository
+load(url("https://raw.githubusercontent.com/mjshepperd/CS5702-Data/master/CS5801_data.rda"))
+
+# Loading the data file 'CS5801_data.rda' to be used in the coursework.
+#load("CS5801_data.rda")
+
+# Adding the dataset into the variable 'baseballData'.
+baseballData <- CS5801.data
+
+# Last two digits of student id: '00' (Student ID: 1736500).
+# Following the guidance, add 1 to one of the digits since both are the same number.
+# New set of digits to be used to determine the teams: '01'.
+# Two teams corresponding to the two digits: BOS [Boston Red Sox] & TEX [Texas Rangers] ('0': BOS & '1': TEX).
+# These teams are used to create a subset of data that is going to be organised, cleaned, analysed, and modelled in later sections of the coursework.
+mySubset <- subset(baseballData, teamID.x=="BOS" | teamID.x=="TEX")
+```
+
+## 1.2 Data quality analysis {#H12}
+
+Data quality is a measure of the qualitative or quantitative aspects of a dataset(s) based on factors such as accuracy, completeness, consistency, traceability, reliability, and timeliness (Rouse, 2019). A few common data quality issues that can be looked at include: mandatory fields (making sure that these are not empty), data type (ensuring that data in each attribute is in the data type it needs to be in), range (ensuring that data in a field is within a range that is deemed to be considered ‘normal’). When given a dataset, the first step usually is to assess the quality of the data and clean the data if required (which almost certainly needs to be carried out). It should be noted that assess the quality of the data and cleaning the data is imported as it will lead to better analysis and decision making. Further, ensuing that the data is accurate is sometimes a legal obligation, adding to the importance of this stage.
+
+### **Data Quality Checking Plan**
+
+A comprehensive data quality checking plan includes:
+
+- Visualising the dataset as a whole (including using the ‘summary’ function) to fully understand the data it contains and identify any any major problems on the surface level.
+- Visualising each attribute in this dataset separately (which for this dataset includes: playerID, teamID.x, G, R, H, AB, RBI, weight, height, salary, birthdate, career.length, bats, age, and hit.ind) to ensure that they are of a high quality. 
+
+In the case that any issues are found at either stage, they will be dealt with appropriately.
+
+As part of **visualising and understanding the dataset as a whole**, a number of different functions can be used. These include:
+
+- The ‘View’ function: which is used to visualise the data in a spreadsheet-style format. 
+- The ‘str’ function: which is used to visualise the internal structure of a dataset. This function also shows the type of each attribute. 
+- The ‘dim’ function: which is used to get the dimensions of the dataset. This can be used to get a better understanding of the size of the dataset that is being used. 
+- The ‘summary’ function: which is used to visualise a summary of the dataset (including mean, median, interquartile range, max, and min of numerical variables & length and count of categorical variables). 
+- The ‘names’ function: which is used to get the names of each column in the dataset. This can be used to understand if the column names make sense. 
+- The ‘head’ function: which is used to visualise the first six rows of the dataset which can help understand the format of the data and any problems with it. 
+- The ‘tail’ function: which – similar to ‘head’ – is used to visualise the last six rows of the dataset which can help understand the format of the data and any problems with it.
+
+Using all of these functions could also help confirm that the dataset has been loaded correctly. 
+
+```{r}
+# Visualising the dataset.
+View(mySubset)
+
+# Visualising the structure of the dataset.
+str(mySubset)
+
+# Visualising the dimensions of the dataset.
+dim(mySubset)
+
+# Visualising the summary of the dataset.
+summary(mySubset)
+
+# Visualising the attribute/column names of the dataset. 
+names(mySubset)
+
+# Visualising the first six rows of the dataset. 
+head(mySubset)
+
+# Visualising the last six rows of the dataset. 
+tail(mySubset)
+```
+
+Upon using all of these functions and visualising the dataset, a much better understanding of the type of data available was formed. Using the ‘summary’ function, it was found that some of the attribute do not have a data type that best correspond to its purpose (it was decided that this was going to be looked at an individual attribute level and dealt with accordingly).  Using the ‘name’, ‘head’, and 'tail' functions, showed that some of the names of attributes were not clear – especially if unfamiliar with baseball terms. While a description of all of the terms are available in the appendix, having more meaningful column titles that follow a coherent pattern would be beneficial. 
+
+*Data Quality Issue: column titles not meaningful*
+
+**The next step** of data quality checking would be to identify any missing data in the dataset – for which the ‘is.na’ function could be used:
+
+```{r}
+# Checking for missingness in data - as a whole.
+any(is.na(mySubset))
+```
+
+For this dataset, missing values were not found. However if they were, each column could have been looked at separately (using the function below) to understand which values were missing. 
+
+```{r}
+# Checking for missingness of data in individual attributes/columns. 
+#is.na(mySubset)
+```
+
+It is important to check for missingness of data in the form “” or “ ” – which can be done using the following function. 
+
+```{r}
+# Checking for missingness in the form “”. 
+is.element("",unlist(mySubset))
+# Checking for missingness in the form “ ”. 
+is.element(" ",unlist(mySubset))
+```
+
+Seeing as there is no missing data in this dataset, the next step of analysis could be carried out, which would be to **visualise and investigate each attribute in the dataset can be looked at individually**.
+
+### **Player ID** (Data Type: chr)
+
+This is a unique code given to each player in the team and therefore, should not contain any duplicates. However, it should be noted that one player id can appear across multiple teams in the overall dataset since it has been stated that one player can play for more than one team in a given season.
+
+The ‘summary’ and ‘table’ functions can be used to visualise the playerID column of the dataset:
+
+```{r}
+# Visualising summary of the playerID column.
+summary(mySubset$playerID)
+# Looking at variables in the playerID column.
+table(mySubset$playerID)
+```
+
+Next, the ‘duplicated’ function can be used to identify if there were any duplicate player IDs:
+
+```{r}
+# Identifying duplicate variables in the Player ID column.
+duplicated(mySubset$playerID)
+```
+
+Using the output of these functions, it was found that four different team players (with Player IDs: ‘lewisco01’, ‘mendero01’, ‘napolmi01’, and ‘pedrodu01’) were duplicated. Upon further investigation, it was found that players with player ids ‘mendero01’ and ‘napolmi01’ were members of both teams (BOS and TEX) which means that these two duplicate rows are not a data quality issue. However, the players with player ids ‘lewisco01’ and ‘pedrodu01’, were duplicated (with data of lewisco01 being duplicated in rows 481 & 959 and data of pedrodu01 being duplicated in rows 632 & 919), therefore, this was seen as an issue. 
+
+*Data Quality Issue: rows with duplicate player ids*
+
+In terms of the datatype, considering the fact that the playerID contains a set of characters (letters and numbers) that are used to uniquely identify each player, the data type of 'chr' seems to be a perfect fit.
+
+### **Team ID** (Data Type: fctr)
+
+This is a unique code given to each team in the season. The full dataset contains information of all the different teams, however, the subset used in this coursework will only contain records of teams BOS and TEX.
+
+The ‘summary’ functions can be used to visualise the teamID.x column of the dataset (the 'table' function that has been commented out can also be used, however, it would produce the same results as the ‘summary’ function):
+
+```{r}
+# Visualising summary of the teamID.x column.
+summary(mySubset$teamID.x)
+# Looking at variables in the teamID.x column.
+#table(mySubset$teamID.x)
+```
+
+Upon looking at the summary of the Team IDs, it can be confirmed that only data from teams BOS and TEX are available in this subset. This was the expected result from this column of data, therefore, it can be stated that there does not seem to be an immediate problem with this attribute of the data. 
+
+The data type ‘fctr’ used for this column makes sense since it contains categorical data that is unordered. 
+
+### **Game [G]** (Data Type: int)
+
+This is a count of the number of games the respective player had played in. 
+
+```{r}
+# Visualising summary of the G column.
+summary(mySubset$G)
+
+# Visualising the set of values in the R column.
+list(mySubset$G)
+```
+
+Seeing as a baseball season generally consists of 162 games, the fact that the maximum number of games a player played in is 160 means that there is no problem, on the surface level, with this data. 
+
+In terms of the data type, ‘int’ is the best type to represent this data as it is numerical (interval). In terms of the data type of ‘Game’, ‘int’ makes the most sense as this is a count and therefore will only contain numbers that are whole numbers.
+
+### **Runs [R]** (Data Type: int)
+
+This is a count of all the runs of a respective player. 
+
+```{r}
+# Visualising summary of the R column.
+summary(mySubset$R)
+
+# Visualising the set of values in the R column.
+list(mySubset$R)
+```
+
+The minimum and maximum values of Runs are both within the expected range and there was no problem identified upon visualising the set of values in this attribute. Therefore, it is reasonable to assume that these values are accurate and no further cleaning needs to be done. 
+
+In terms of the data type of ‘Runs’, ‘int’ makes the most sense as this is a count and therefore will only contain numbers that are whole numbers. 
+
+### **Hits [H]** (Data Type: int)
+
+This is a count of all the hits (times the base was reached because of a batted, fair ball - without an error by the defence). 
+
+```{r}
+# Visualising summary of the H column.
+summary(mySubset$H)
+
+# Visualising the set of values in the H column.
+list(mySubset$H)
+```
+
+The minimum and maximum values of Hits are both within the expected range and there was no problem identified upon visualising the set of values in this attribute. Therefore, it is reasonable to assume that these values are accurate and no further cleaning needs to be done. 
+
+In terms of the data type of ‘Hits’, ‘int’ makes the most sense as this is a count and therefore will only contain numbers that are whole numbers. 
+
+### **At Bat [AB]** (Data Type: int)
+
+This is the count of the number of times a batter reaches base via a fielder's choice, hit or an error (not including catcher's interference) or when a batter is put out on a non-sacrifice. 
+
+```{r}
+# Visualising summary of the AB column.
+summary(mySubset$AB)
+
+# Visualising the set of values in the AB column.
+list(mySubset$AB)
+```
+
+The minimum and maximum values of At Bat are both within the expected range and there was no problem identified upon visualising the set of values in this attribute. Therefore, it is reasonable to assume that these values are accurate and no further cleaning needs to be done. 
+
+In terms of the data type of ‘At Bat’, ‘int’ makes the most sense as this is a count and therefore will only contain numbers that are whole numbers. 
+
+### **Runs Batted In [RBI]** (Data Type: int)
+
+This is the total count of the runs batted in.
+
+```{r}
+# Visualising summary of the RBI column.
+summary(mySubset$RBI)
+```
+
+On looking at the output from the summary of RBI, it is clear right away that there is a problem with the data. The RBI is a total count and therefore cannot be a negative number. The summary function shows that the minimum value in this column is -21 which is an error value. Therefore, a list of rows with negative numbers for the RBI value will need to be found.
+
+```{r}
+# Finding the rows with a negative RBI values.
+subset(mySubset,RBI<0)
+```
+
+Upon further investigation, it was found that there was another negative value in this column, which means that there are two error values (with player ids: "grokkel01" & "perezjj03") in total in this column.
+
+*Data Quality Issue: negative values 'runs batted in' in values*
+
+```{r}
+# Visualising the set of values in the RBI column.
+list(mySubset$RBI)
+```
+
+Other than the two negative values, visualising the data in the data in the Runs Batted In column showed that there was no further problems with its data. 
+
+In terms of the data type of ‘Runs Batted In’, ‘int’ makes the most sense as this is a count and therefore will only contain numbers that are whole numbers.
+
+### **Weight** (Data Type: int)
+
+This is a measure of each player's weight in pounds.
+
+```{r}
+# Visualising summary of the weight column.
+summary(mySubset$weight)
+```
+
+Looking at the minimum and maximum values of weights, it is clear that while the minimum value of 170 lbs can be thought of as being normal, the maximum value of 585 lbs is well over the maximum weight of a person (NHS, 2020). Though the NHS (in the UK) was used as guidance to understand which extreme values of weight and which ones would be considered ‘Normal’, it can be assumed that these values will apply to these baseball players (in the US) as well. Even though, average weights of people in different countries may differ, it is unlikely that the extreme values will differ significantly.  Therefore, the range set out by the NHS can be taken into account when trying to find error values. Using this assumption, it could be thought that the maximum value of 585 lbs is an error value (i.e. an outlier).
+
+Further, the median and the mean are close enough to understand that the rest of the data in this attribute are accurate. Though, a test can be carried out to calculate the mean and the median of this data ignoring the extreme value of 585 lbs. 
+
+```{r}
+# Finding the extreme values of weight.
+subset(mySubset,weight>374)
+```
+
+*Data Quality Issue: weight exceeds 374 lbs - which is deemed 'too high'*
+
+```{r}
+# Calculating the mean weight of the subset without taking into account values outside the range (NHS, 2020). 
+mean(mySubset$weight[mySubset$weight<374])
+
+# Calculating the median weight of the subset without taking into account values outside the range (NHS, 2020). 
+median(mySubset$weight[mySubset$weight<374])
+```
+
+After removing the extreme value, the mean and the median seem to be very close together proving that the rest of the data is accurate. 
+
+In terms of the data type, given that weight is numerical and continuous, the given data type of ‘int’ might not be the ideal one. Instead, ‘dbl’ would be a more fitting data type for weight.
+
+*Data Quality Issue: datatype of weight should be continuous*
+
+### **Height** (Data Type: int)
+
+This is a measure of each player's height in inches.
+
+```{r}
+# Visualising summary of the height column 58.2677 - 78.7402 (NHS, 2020).
+summary(mySubset$height)
+```
+
+Looking at the maximum and minimum values, they seem to be within the range of ‘normal’ values (NHS, 2020). Further, the mean and the median of these values are very close (almost the same) which adds clarity that these values might be accurate. 
+
+In terms of the data type, similar to the weight, the height is also numerical and continuous. Therefore, the given data type of ‘int’ might not be the ideal one but rather, ‘dbl’ would be a more fitting data type for the height of players.
+
+*Data Quality Issue: datatype of height should be continuous*
+
+### **Salary** (Data Type: dbl)
+
+This is a measure of the salry of each player.
+
+```{r}
+# Visualising summary of the salary column.
+summary(mySubset$salary)
+
+# Visualising the set of values in the salary column.
+list(mySubset$salary)
+```
+
+On the whole, there seemed to be nothing wrong with the salary attribute other than the fact that the minimum salary was deemed ‘too small’ (to be an annual salary). Further investigation was necessary, looking at the player with a salaries lower than the usual minimum (ESPN.co.uk, 2020).
+
+```{r}
+# Finding the rows with salaries less than the minimum (ESPN.co.uk, 2020).
+subset(mySubset,salary<46000)
+```
+
+Using the minimum salary guidance set out, it was found that two players (with player ids: “greeneb02” & “mosslaf0”) which can be thought of as being incorrect. Therefore, these values will need to be death with. 
+
+*Data Quality Issue: salary should not be lower than the usual minimum*
+
+Other than this, it was also noticed that the format in which salary is stored is not the most readable. However, since it was still understandable and the fact that changing this format might have led to some loss in the data, it was left as it is.
+
+In terms of the data type, ‘double’ is seen as the most suitable datatype for this attribute. Therefore, no further changes need to be made to the datatype of salary.
+
+### **Birth Date** (Data Type: date)
+
+Each player's date of birth.
+
+```{r}
+# Visualising summary of the birthdate column.
+summary(mySubset$birthDate)
+
+# Visualising the set of values in the birthdate column.
+list(mySubset$birthDate)
+```
+
+At a high level, the date of birth attribute does not demonstrate any data quality problems. However, seeing at this was data from the year 2015 and players are unlikely to play professionally until they turn 18 (Mathewson, 2019), all players that have a date of birth after 1997 (which would make them 18 in 2015) can be looked at. As there was one player (with player id: “brownmj01”) that was born after 1997, this was seen as a data quality issue. 
+
+*Data Quality Issue: players have a date of birth after 1997 – making them underage professional players*
+
+In terms of the data type, ‘date’ makes perfect sense for this attribute as it contains the date of birth.
+
+### **Career Length** (Data Type: dbl)
+
+This is a measure of the length of each player's career (in years).
+
+```{r}
+# Visualising summary of the career.length column.
+summary(mySubset$career.length)
+
+# Visualising the set of values in the salary column.
+list(mySubset$career.length)
+```
+
+Upon looking at the length of each player's career (in years) as a summary (mean, median, minimum, and maximum) and all the values by itself, it is apparent that there is no major problem with them. 
+
+In terms of the data type though, ‘dbl’ might not be seen as the best data type to be used for this instance. Since the career length is in years, a better data type to use would be ‘int’ which would still be numerical but measure values at an interval as opposed to continuous. It is possible to change the data type of this attribute to ‘int’, however, this is not done as changing a double to an integer means that some data will be lost. 
+
+### **Bats** (Data Type: fctr)
+
+The hand used by each player to bat: Left [L], Right [R], and Both [B] (i.e. ambidextrous players).
+
+```{r}
+# Visualising summary of the bats column.
+summary(mySubset$bats)
+```
+
+The Bats attribute contains Left [L], Right [R], or Both [B] and there seem to be no data quality issues with it. 
+
+The data type of ‘fctr’ used for this column makes sense since it is going onto only contain one of three sets values. 
+
+### **Age** (Data Type: dbl)
+
+This is a measure of the age of each player.
+
+```{r}
+# Visualising summary of the age column.
+summary(mySubset$age)
+```
+
+The age by itself does not seem to have any data quality issues. However, when comparing the date of birth with the age, there are instances where these do not match. Seeing as there is not enough information to identify if the age or the date of birth is the error, it was decided that will be left as it is. 
+
+While the datatype of age should have ideally been an integer (similar to career length), changing a double to an integer means that some data would be lost. Therefore, it will be left as it is.
+
+### **Hit Ind** (Data Type: dbl)
+
+This shows if a player made any hits in the given season (2015). This value would be one [1] if the given player made at least one hit and zero [0] if they made none. 
+
+```{r}
+# Visualising the 0s and 1s of the hit.ind column.
+table(mySubset$hit.ind)
+```
+
+An additional row can be created to compare the data from the Hit Ind column with the data from the Hits column.
+
+```{r}
+# Creating an additional column that compares the Hits [H] with the Hit Ind.
+# If the Hits [H] column contains zero [0], the Hit Ind column should also be zero [0].
+# However, if the Hits [H] column contains a value greater than or equal to one [1], the Hit Ind column should be one [1].
+mySubset$CorrectHitInd <- ifelse((mySubset$H == 0) & (mySubset$hit.ind == 0), 'Correct: 0H',
+                                   ifelse((mySubset$H >= 1) & (mySubset$hit.ind == 1), 'Correct 1H', 'Incorrect'))
+
+# Visualising correct values (OF hits & 1 hit) and incorrect values.
+table(mySubset$CorrectHitInd)
+```
+
+It is clear that there is no error between the Hits and the Hit Ind columns in this dataset. The results show that all 84 rows contain accurate data. Therefore, the additional row created to check this can now be deleted. 
+
+```{r}
+# Deleting the newly created 'correct.hit.ind' column after assessing its accuracy.
+mySubset$CorrectHitInd <- NULL
+```
+
+All these steps proved that the data in the Hit Ind column is in fact accurate. However, the data type of ‘dbl’ used for this attribute does not fit the purpose of this. The Hit Ind column while having numerical values ‘0’ and ‘1’ is categorical since it contains a binary response (i.e. ‘0’ if the player did not make any hits and ‘1’ if they made any). Due to this, the best data type for this row might be ‘fctr’ seeing as it is only going to contain categorical data values of ‘0’ or ‘1’.
+
+### Alternative method of data quality checking 
+
+An alternative method of data quality checking would be to use validation rules. This could have been done if different rules about the different attributes were known. A few attributes will be used to demonstrate an example this method (while it is known that these are not really rules, they are used to demonstrate how the function could work):
+If it was known that the teams were supposed to be either ‘BOS’ and/or ‘TEX’, that the games count was supposed to be between 0 and 200, that the runs batted in count was supposed to be between 0 and 120, that the weight was supposed to be between 150 and 350, and that the height was supposed to be between 60 and 80, the following validation rules could have been implemented.
+
+```{r}
+# Visualising the data. 
+head(mySubset)
+
+# Creating a set of validation rules.
+validationCheck <- check_that(mySubset,
+                         teamOK = teamID.x == "BOS" | teamID.x == "TEX",
+                         gamesMinOK = G >= 0, 
+                         gamesMaxOK = G < 200,
+                         runsBattedInMinOK = RBI >= 0, 
+                         runsBattedInMaxOK = RBI < 120,
+                         weightMinOK = weight > 150, 
+                         weightMaxOK = weight < 350,
+                         heightMinOK = height > 60, 
+                         heightMaxOK = height < 80)
+# Without giving each validation rule a name, they will be displayed as V1, V2, V3, and V4 which might make it more difficult to understand the purpose of the rules. Due to this, it is though that giving validation rules names is good practice. 
+
+barplot(validationCheck,
+     main="Validation Rules Check")
+```
+
+It is clear by looking at the results that there are errors with negative values of RBI and extreme values of weight on the upper end (which was found through the previous method of analysis as well). Therefore, it can be said that these validations rules can be used for the cleaning stage as well. 
+
+*Having identified some of the data quality issues, data cleaning can be carried out on this dataset*
+
+## 1.3 Data cleaning {#H13}
+
+Data cleaning, simply put, is the process of detecting and correcting corrupt or inaccurate data in a dataset(s) (Formplus, 2020). Clean data, while often neglected, is extremely important since cleaner data will lead to better decision making. In some cases, ensuring that the data is of a high quality might be a legal obligation further proving the importance of data cleaning. Some of the data quality issues discovered in the previous section could be looked at and cleaned.
+
+When data quality problems are found (error values and missing values), there are a number of ways of dealing with them:
+
+- **Ignoring it**: while this is one of the options, it should almost never be done. Ignoring the data without understanding what is wrong can distort the overall output.
+- **Replacing it with NA**: this would be an option when a value is added is wrong (an error) and it is not possible to correct it. Datasets might already contain NA values which means that they are not available.  
+- **Deleting it (either row-wise or column-wise) **: deleting the entire row or column of data would be another way of dealing with error values – although the actual importance of the row/column of data needs to be taken into account. 
+- **Correcting it**: this would be to try to find the original values by using the original source or by some other means. It should be noted that the original values might not be found in some instances (for example: if it is not possible to carry out the experiments again or if the answers given might be different to the initial answers). 
+- **Imputing it (with a reasonable value) **: would be the process of trying to change the value to what it might have actually been and is thought of as one of the best methods of dealing with error or missing values. There are a number of ways in which imputation can be done, these include: replacing the values with the mean/median, using regression methods, hot-deck, using k-nearest neighbours’ algorithms and many other methods.
+
+In this report, imputing the data would be used in every possible instance with the row being deleted if this is not possible.
+
+Creating a new subset to make changes to address data quality issues found (variable names, duplicate rows, etc.). The reason a new subset is created with the same set of data is to ensure that the original data is available to always go back to in the case that it is required. 
+[In the case if the coursework, the rda file can always be loaded again to get the original data, however, it might be seen as being beneficial to create a new subset in practice.]
+
+*Data Cleaning: add meaningful names to all attributes*
+
+```{r}
+# Creating a new subset.
+myUpdatedSubset = mySubset %>%
+  rename(
+    # Changing column name of attribute 'playerID' in the new subset.
+    PlayerID = playerID,
+    # Changing column name of attribute 'teamID.x' in the new subset.
+    TeamID = teamID.x,
+    # Changing column name of attribute 'G' in the new subset.
+    GamesCount = G,
+    # Changing column name of attribute 'R' in the new subset.
+    RunsCount = R,
+    # Changing column name of attribute 'H' in the new subset.
+    HitsCount = H,
+    # Changing column name of attribute 'AB' in the new subset.
+    AtBatCount = AB,
+    # Changing column name of attribute 'RBI' in the new subset.
+    RunsBattedInCount = RBI,
+    # Changing column name of attribute 'weight' in the new subset.
+    Weight = weight,
+    # Changing column name of attribute 'height' in the new subset.
+    Height = height,
+    # Changing column name of attribute 'salary' in the new subset.
+    Salary = salary,
+    # Changing column name of attribute 'birthDate' in the new subset.
+    Birthdate = birthDate,
+    # Changing column name of attribute 'career.length' in the new subset.
+    CareerLength = career.length,
+    # Changing column name of attribute 'bats' in the new subset.
+    Bats = bats,
+    # Changing column name of attribute 'age' in the new subset.
+    Age = age,
+    # Changing column name of attribute 'hit.ind' in the new subset.
+    HitInd = hit.ind
+  )
+
+# Visualising the newly created subset of data.
+View(myUpdatedSubset)
+```
+
+*Data Cleaning: remove rows with duplicate player ids – that are in the same team*
+
+Deleting rows with duplicate player ids can be carried out using a number of functions. Seeing as some duplicate players are valid (they play for two separate teams) the first method shown could not be used.  Instead, a second method of identifying the player ids and deleting them could be used.
+
+```{r}
+# First Method of Deleting Duplicate Values.
+
+# Deleting rows that have duplicate player IDs.
+#myUpdatedSubset<-myUpdatedSubset[!duplicated((myUpdatedSubset$PlayerID)),]
+```
+
+```{r}
+# Second Method of Deleting Duplicate Values.
+
+# Identifying rows which contain duplicate player ids.
+which(myUpdatedSubset$PlayerID == "lewisco01")
+which(myUpdatedSubset$PlayerID == "pedrodu01")
+
+# Deleting rows which contain duplicate player ids.
+myUpdatedSubset<-myUpdatedSubset[-c(80, 75),]
+```
+
+The ‘duplicated’ function can be run to make sure that the deletion of duplicate rows did in fact work.
+
+*Data Cleaning: correct negative values of 'runs batted in'*
+
+Given that there are two sets of runs batted in values that are negative, these need to be corrected. One method of doing this could be to replace these values with the mean or median (so as to not change the mean or median values), however, a much more appropriate method of imputation could be used in this instance. The correlation between the runs batted in attribute and various other attributes can be looked at to determine the best way to impute these values.  
+
+```{r}
+# Calculating the correlation between RunsBattedInCount & GamesCount.
+cor.test(myUpdatedSubset$RunsBattedInCount, myUpdatedSubset$GamesCount)
+
+# Calculating the correlation between RunsBattedInCount & RunsCount.
+cor.test(myUpdatedSubset$RunsBattedInCount, myUpdatedSubset$RunsCount)
+
+# Calculating the correlation between RunsBattedInCount & HitsCount.
+cor.test(myUpdatedSubset$RunsBattedInCount, myUpdatedSubset$HitsCount)
+
+# Calculating the correlation between RunsBattedInCount & AtBatCount.
+cor.test(myUpdatedSubset$RunsBattedInCount, myUpdatedSubset$AtBatCount)
+```
+
+Since it was found that the ‘hits’ value has the highest correlation with the 'runs batted in' value, this will be used for the imputation.
+
+```{r}
+# To use the ‘hotdeck()’ function for imputation, the values that need to be NA so error values could be changed to NA before using the ‘hotdeck()’ function. 
+
+# Finding the values of the rows to be imputed.
+which(myUpdatedSubset$PlayerID == "perezjj03")
+which(myUpdatedSubset$PlayerID == "grokkel01")
+
+# Changing the rows to be imputed to ‘NA’.
+myUpdatedSubset[81,7] <- NA
+myUpdatedSubset[78,7] <- NA
+
+# Imputing the BMI column using the ‘hotdeck()’ function. 
+myUpdatedSubset <- hotdeck(myUpdatedSubset,  variable = "RunsBattedInCount", ord_var = "HitsCount")
+
+# It should be noted that the ‘hotdeck()’ function created an additional column in the dataframe that is set to FALSE if the column has not been imputed and is set to TRUE if it has. This column of data is useful in some instances but is not for this problem, so it will be deleted.
+# Deleting the 'RunsBattedInCount_imp' column created by the 'hotdeck' function.
+myUpdatedSubset$RunsBattedInCount_imp <- NULL
+```
+
+The 'subset' function can be used to check if the imputation worked correctly.
+
+```{r}
+# Checking if any rows contain negative RunsBattedInCount values.
+subset(myUpdatedSubset,RunsBattedInCount < 0)
+```
+
+It is clear that this imputation worked correctly – with the hot deck function changing the ‘RunsBattedInCount’ of both players to seven.
+
+Another method of imputation would be to use regression (i.e. use the games, runs, hits, and at bat counts to build a model), using the model to determine the appropriate values of runs batted in.
+
+In this dataset, there were other attributes that had a high correlation with the runs batted in value – which made it possible to carry out imputation. However, if this was not possible, these rows could have been deleted using the functions below. 
+
+```{r}
+# Finding the values of the rows to be deleted.
+#which(myUpdatedSubset$PlayerID == "greeneb02")
+#which(myUpdatedSubset$PlayerID == "mosslaf01")
+
+# Deleting rows. 
+#myUpdatedSubset<-myUpdatedSubset[-c(81, 78),]
+```
+
+*Data Cleaning: correct weight values that exceeds 374 lbs – which is deemed 'too high'*
+
+In order to correct the weight value that is deemed 'too high', the correlation between the weight and other attributes needs to be found.
+
+```{r}
+# Calculating the correlation between Weight and GamesCount.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$GamesCount)
+
+# Calculating the correlation between Weight and RunsCount.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$RunsCount)
+
+# Calculating the correlation between Weight and HitsCount.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$HitsCount)
+
+# Calculating the correlation between Weight and AtBatCount.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$AtBatCount)
+
+# Calculating the correlation between Weight and RunsBattedInCount.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$RunsBattedInCount)
+
+# Calculating the correlation between Weight and Height.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$Height)
+
+# Calculating the correlation between Weight and Salary.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$Salary)
+
+# Calculating the correlation between Weight and CareerLength.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$CareerLength)
+
+# Calculating the correlation between Weight and Age.
+cor.test(myUpdatedSubset$Weight, myUpdatedSubset$Age)
+```
+
+Seeing as the weight attribute does not significantly correlate to any other attribute, the best approach for this would be to delete this row.
+
+```{r}
+# Finding the value of the row to be deleted.
+which(myUpdatedSubset$PlayerID == "rabbibb01")
+
+# Deleting the row from the subset.
+myUpdatedSubset<-myUpdatedSubset[-c(82),]
+
+# Checking if any rows of Weight contain values greater than 374 lbs.
+subset(myUpdatedSubset,Weight > 374)
+```
+
+The final function showed that the dataset now does not contain weight values that are classified as being ‘too high’.
+
+*Data Cleaning: correct low salaries*
+
+In order to correct the salary values, the correlation between these and other attributes can be found (similar to before).
+
+```{r}
+# Calculating the correlation between Salary & CareerLength.
+cor.test(myUpdatedSubset$Salary, myUpdatedSubset$CareerLength)
+
+# Calculating the correlation between Salary & Age.
+cor.test(myUpdatedSubset$Salary, myUpdatedSubset$Age)
+```
+
+Seeing as there is no significant correlation between the salary and various other attributes, deleting these rows is seen as an appropriate method of dealing with this data quality issue.
+
+```{r}
+# Finding the values of the rows to be deleted.
+which(myUpdatedSubset$PlayerID == "greeneb02")
+which(myUpdatedSubset$PlayerID == "mosslaf01")
+
+# Deleting rows from the subset.
+myUpdatedSubset<-myUpdatedSubset[-c(76, 79),]
+```
+
+*Data Cleaning: correct players have a date of birth after 1997*
+
+As discussed previous as well, since it is not known if the ‘date of birth’ or the ‘age’ is the error, the best solution for this data quality issue would be to delete this row (with a date of birth after 1997).
+
+```{r}
+# Finding the value of the row to be deleted.
+which(myUpdatedSubset$PlayerID == "brownmj01")
+
+# Deleting the row from the subset.
+myUpdatedSubset<-myUpdatedSubset[-c(75),]
+```
+
+*Data Cleaning: change datatypes of attributes*
+
+As previously identified, a few attributes do not have data types that are ideal. These include: Weight, Height, CareerLength, Age, and HitInd. Out of these, only the data type of Weight, Height, and HitInd can be changed since changing the data type of CareerLength or Age would mean that some of the information would be lost. The head function can then be used to confirm that these changes have indeed been made.
+
+```{r}
+# Visualising the new subset - along with new data types. 
+head(myUpdatedSubset)
+```
+
+The data types of the three attributes (Weight, Height, and HitInd) can be changed to best reflect the type of data it contains.
+
+```{r}
+# Changing data type of Weight to double. 
+myUpdatedSubset$Weight <- as.double(myUpdatedSubset$Weight) 
+
+# Changing data type of Height to double. 
+myUpdatedSubset$Height <- as.double(myUpdatedSubset$Height) 
+
+# Changing data type of HitInd to factor.
+myUpdatedSubset$HitInd <- as.factor(myUpdatedSubset$HitInd)
+```
+
+*Having found problems and completed the cleaning of the dataset provided, exploratory data analysis could be carried out*
+
+# 2. Exploratory Data Analysis (EDA) {#H2}
+
+## 2.1 EDA plan {#H21}
+
+Exploratory data analysis (EDA) is the process of analysing and investigating datasets, summarising their main characteristics and using data visualisation methods to better understand the data (IBM, 2020). With EDA, there are two different summary statistics that could be used to visualise the data: univariate (where the data being analysed consists of one attribute) and multivariate (where the data being analysed – as the name suggest – consists of more than one attribute).
+
+### **Plan for Exploratory Data Analysis** 
+
+The general process of EDA while not well defined, includes an iterative process of three steps – the first of which is to generate questions about the data. The next step of EDA includes trying to find the answers to the questions generated by visualising, transforming and modelling the data. The final step is to use the finding to refine and generate new questions to make them more precise and help understand the data better. It is important to remember that this process is iterative and involves continuously refining the process to ensure that the questions become more precise and help understand the data better. While the first step of EDA includes generating questions about the data, as Sir David Cox stated, “There are no routine statistical questions, only questionable statistical routines”. It is also thought that coming up with questions that reveal important insights about the data is difficult – since not too much is initially known about the data. Generally, it is though that new questions will lead to new discoveries being made about the data and therefore that every question should be followed up with a new question – to be able to drill down into interesting parts of the data.  Due to the fact that there aren’t a set of rules to be followed, as a rule of thumb, questions about the data types, variation and covariation are used as a starting point.
+
+It is important to note that when it comes to EDA, where the data comes from (i.e. is it a reputable source) and if the dataset available is enough (which if it is not – more data should be collected) needs to be considered before starting the process of analysis. This will reduce the chance of problems occurring halfway into the process of data analysis. In this instance however, this step can be ignored as the dataset provided is accepted as it is and any analysis/modelling done based on the data provided.
+
+EDA Questions for this dataset includes:
+
+1.	What datatypes are being used?
+These includes checking if the data are categorical (which includes being binary in some cases), or numerical (discrete, ordinal or continuous). 
+
+2.	What is the variation between variables?
+This includes looking at the variation between the variables (Player ID, Team ID, Game Count, Runs Count, Hits Count, At Bat Count, Runs Batted In Count, Weight, Height, Salary, Birth Date, Career Length, Bats, Age, Hit Ind) by themselves. 
+
+3.	What is the covariation between variables?
+This includes looking at the variation between two sets of variables (i.e. runs & weight, weight & height, career length & salary, or career length & age).
+
+[Other questions that could have been used for EDA but are not include: Has a similar analysis been done on this dataset? Is there anything that could be learnt from this?]
+
+The next step of EDA includes trying to find the answers to the questions generated by visualising, transforming and modelling the data. The final step is to use the finding to refine and generate new questions to make them more precise and help understand the data better. 
+
+1. What question(s) are you trying to solve (or prove wrong)?
+2. What kind of data do you have and how do you treat different types?
+3. What’s missing from the data and how do you deal with it?
+4. Where are the outliers and why should you care about them?
+5. How can you add, change or remove features to get more out of your data? 
+
+It should be noted that questions are a valuable outcome of EDA, therefore, it is still considered to be beneficial to have the outcome of EDA be more questions.
+
+## 2.2 EDA and summary of results {#H22}
+
+### **Visualising data for Exploratory Data Analysis**
+
+Initially, all of the attributes need be visualised both numerically and graphically. 
+
+```{r}
+# Visualising the summary of all the attributes in the new dataset (as the first step of EDA).
+summary(myUpdatedSubset)
+```
+
+Usually, it is during the process of EDA that data is loaded in before beginning to analyse it. Therefore, the ‘head’ and ‘tail’ functions will be used at this stage to visualise the data (and identify any problems on a surface level). This however will not be done on this instance since it was previously done (see Section 1.1). 
+
+As part of EDA (exploring and answering the first question), the datatype in the dataset need to be understood.  The 'class' function can be used for this: [The reason the ‘typeof’ function is not used in this instance is because the high level type of object is what needs to be found. The ‘typeof’ function returns the data type (low level type) of the object (i.e. it returns numeric as opposed to factor if the data type of the values in the factor is numeric).]
+
+```{r}
+# Determine the data type of 'PlayerID'
+class(myUpdatedSubset$PlayerID)
+
+# Determine the data type of 'TeamID'
+class(myUpdatedSubset$TeamID)
+
+# Determine the data type of 'GamesCount'
+class(myUpdatedSubset$GamesCount)
+
+# Determine the data type of 'RunsCount'
+class(myUpdatedSubset$RunsCount)
+
+# Determine the data type of 'HitsCount'
+class(myUpdatedSubset$HitsCount)
+
+# Determine the data type of 'AtBatCount'
+class(myUpdatedSubset$AtBatCount)
+
+# Determine the data type of 'RunsBattedInCount'
+class(myUpdatedSubset$RunsBattedInCount)
+
+# Determine the data type of 'Weight'
+class(myUpdatedSubset$Weight)
+
+# Determine the data type of 'Height'
+class(myUpdatedSubset$Height)
+
+# Determine the data type of 'Salary'
+class(myUpdatedSubset$Salary)
+
+# Determine the data type of 'Birthdate'
+class(myUpdatedSubset$Birthdate)
+
+# Determine the data type of 'CareerLength'
+class(myUpdatedSubset$CareerLength)
+
+# Determine the data type of 'Bats'
+class(myUpdatedSubset$Bats)
+
+# Determine the data type of 'Age'
+class(myUpdatedSubset$Age)
+
+# Determine the data type of 'HitInd'
+class(myUpdatedSubset$HitInd)
+```
+
+The datatypes of all the attributes are:
+
+- Player ID – character
+- Team ID – factor
+- Game Count – integer
+- Runs Count – integer
+- Hits Count – integer
+- At Bat Count – integer
+- Runs Batted In Count – integer
+- Weight – numeric (double)
+- Height – numeric (double)
+- Salary – numeric (double)
+- Birth Date – date
+- Career Length – numeric (double)
+- Bats – factor
+- Age – numeric (double)
+- Hit Ind – factor
+
+Upon visualising the data as a whole and understanding the datatypes, each attribute in the dataset can be looked at in detail.
+
+*It is understood that some of the functions run (such as summary) in this section (EDA) have been previously run as well. They have been run again to add completeness to the process of Exploratory Data Analysis*
+
+### **Visualising data in Player ID** 
+
+```{r}
+# Visualising the data in 'PlayerID'. 
+table(myUpdatedSubset$PlayerID)
+```
+
+The results of visualising the data from ‘PlayerID’ is as expected. Each of the players have unique IDs and in some instances one player appears twice since they can play for more than one team in one season. 
+
+### **Visualising data in Team ID** 
+
+```{r}
+# Visualising the data in 'TeamID'. 
+table(myUpdatedSubset$TeamID)
+```
+
+Details of the data in the ‘TeamID’ attribute can be visualised graphically as well (i.e. using a bar chart).
+
+```{r}
+# Visualising the teams in the dataset. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = TeamID), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Teams") + xlab("Team ID") + ylab("Number of Players")
+
+# Team ID
+# BOS: Boston Red Sox
+# TEX: Texas Rangers
+```
+
+It is clear that this subset contains an equal number of players from both the Boston Red Sox and Texas Rangers teams. 
+
+### **Visualising data in Game Count, Runs Count, Hits Count, At Bat Count, and Runs Batted In Count**
+
+**Game Count**
+
+```{r}
+# Visualising a summary of the data in TeamID. 
+summary(myUpdatedSubset$GamesCount)
+
+# Visualising the ‘Games Count’ by plotting a bar chart of the ‘Total Count of Games Played’ vs the ‘Number of Players’. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = GamesCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Games Count") + xlab("Total Count of Games Played") + ylab("Number of Players")
+```
+
+Since the bar chart showed that a large portion of the players have a 'GamesCount' of zero, another bar chat can be plotted, removing the zero values, to try to gather additional insights.
+
+```{r}
+# Visualising the same plot of 'GamesCount' with the zero values excluded. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = GamesCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Runs Count") + xlab("Total Count of Runs") + ylab("Number of Players") + 
+xlim(1, 170) # The upper limit is determined by looking at the maximum value in this attribute. 
+```
+
+**RunsCount**
+
+```{r}
+# Visualising a summary of the data in 'RunsCount'.
+summary(myUpdatedSubset$RunsCount)
+
+# Visualising the ‘Runs Count’ by plotting a bar chart of the ‘Total Count of Runs’ vs the ‘Number of Players’. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = RunsCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Runs Count") + xlab("Total Count of Runs") + ylab("Number of Players")
+```
+
+Since the bar chart showed that a large portion of the players have a 'RunsCount' of zero, another bar chat can be plotted, removing the zero values, to try to gather additional insights.
+
+```{r}
+# Visualising the same plot of 'RunsCount' with the zero values excluded. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = RunsCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Runs Count") + xlab("Total Count of Runs") + ylab("Number of Players") + 
+xlim(1, 100) # The upper limit is determined by looking at the maximum value in this attribute. 
+```
+
+**Hits Count**
+
+```{r}
+# Visualising a summary of the data in 'HitsCount' 
+summary(myUpdatedSubset$HitsCount)
+```
+
+```{r}
+# Visualising the ‘Hits Count’ by plotting a bar chart of the ‘Total Count of Hits’ vs the ‘Number of Players’. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = HitsCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Hits Count") + xlab("Total Count of Hits") + ylab("Number of Players")
+```
+
+Since the bar chart showed that a large portion of the players have a 'HitsCount' of zero, another bar chat can be plotted, removing the zero values, to try to gather additional insights.
+
+```{r}
+# Visualising the same plot of 'HitsCount' with the zero values excluded. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = HitsCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Hits Count") + xlab("Total Count of Hits") + ylab("Number of Players") + 
+xlim(1, 200) # The upper limit is determined by looking at the maximum value in this attribute. 
+```
+
+**At Bat Count**
+
+```{r}
+# Visualising a summary of the data in 'AtBatCount' 
+summary(myUpdatedSubset$AtBatCount)
+```
+A function that enables only integer values to be displayed on the y axis of plots is used throughout this section.  
+
+```{r}
+# Visualising the ‘At Bat’ by plotting a bar chart of the ‘Total Count of At Bat’ vs the ‘Number of Players’. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = AtBatCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of At Bat") + xlab("Total Count of At Bat") + ylab("Number of Players")
+```
+
+Since the bar chart showed that a large portion of the players have a 'AtBatCount' of zero, another bar chat can be plotted, removing the zero values, to try to gather additional insights.
+
+```{r}
+# Visualising the same plot of 'HitsCount' with the zero values excluded.
+ggplot(myUpdatedSubset) + geom_bar(aes(x = AtBatCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of At Bat") + xlab("Total Count of At Bat") + ylab("Number of Players") + 
+xlim(1, 620) # The upper limit is determined by looking at the maximum value in this attribute. 
+```
+
+**Runs Batted In Count**
+
+```{r}
+# Visualising a summary of the data in 'RunsBattedInCount' 
+summary(myUpdatedSubset$RunsBattedInCount)
+```
+
+```{r}
+# Visualising the ‘Runs Batted In’ by plotting a bar chart of the ‘Total Count of Runs Batted In’ vs the ‘Number of Players’. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = RunsBattedInCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Runs Batted In") + xlab("Total Count of Runs Batted In") + ylab("Number of Players")
+```
+
+Since the bar chart showed that a large portion of the players have a 'RunsBattedInCount' of zero, another bar chat can be plotted, removing the zero values, to try to gather additional insights.
+
+```{r}
+# Visualising the same plot of 'RunsBattedInCount' with the zero values excluded. 
+ggplot(myUpdatedSubset) + geom_bar(aes(x = RunsBattedInCount), fill = 'purple') + theme_bw() + ggtitle("Bar Chart  of Runs Batted In") + xlab("Total Count of Runs Batted In") + ylab("Number of Players") + 
+xlim(1, 110) # The upper limit is determined by looking at the maximum value in this attribute. 
+```
+
+The visualisation of the Game Count, Runs Count, Hits Count, At Bat Count, and Runs Batted In Count showed that a majority of the data in these attributes were zero values. When these zero values were removed and the plots visualised again, it was found that the scores were spread out with a higher number of values being on the lower end of the spectrum.
+
+### **Visualising data in Weight & Height**
+
+**Weight**
+
+```{r}
+# Visualising a summary of the data in 'Weight'.
+summary(myUpdatedSubset$Weight)
+```
+
+```{r}
+# Visualising the ‘Weight’ attribute by plotting a histogram of the number of players with different weights.
+ggplot(myUpdatedSubset, aes(x=Weight)) + geom_histogram(color="purple", fill="purple", binwidth=2) + theme_bw() + ggtitle("Histogram of Weight") + xlab("Weight of Players") + ylab("Number of Players") 
+```
+
+```{r}
+# Visualising the ‘Weight’ attribute - along with the density function to further understand the its distribution.
+ggplot(myUpdatedSubset, aes(x=Weight)) + geom_histogram(aes(y=..density..), color="purple", fill="purple", binwidth=2) + geom_density(alpha=.2, fill="black") + theme_bw() + ggtitle("Histogram of Weight") + xlab("Weight of Players") + ylab("Number of Players (normalised)")
+```
+
+**Height**
+
+```{r}
+# Visualising a summary of the data in 'Height'.
+summary(myUpdatedSubset$Height)
+```
+
+```{r}
+# Visualising the ‘Height’ attribute by plotting a histogram of the number of players with different height.
+ggplot(myUpdatedSubset, aes(x=Height)) + geom_histogram(color="purple", fill="purple", binwidth=0.5) + theme_bw() + ggtitle("Histogram of Height") + xlab("Height of Players") + ylab("Number of Players") 
+```
+
+```{r}
+# Visualising the ‘Height’ attribute - along with the density function to further understand the its distribution.
+ggplot(myUpdatedSubset, aes(x=Height)) + geom_histogram(aes(y=..density..), color="purple", fill="purple", binwidth=0.5) + geom_density(alpha=.2, fill="black") + theme_bw() + ggtitle("Histogram of Height") + xlab("Height of Players") + ylab("Number of Players (normalised)")
+```
+
+The weight and height of the players were visualised numerically, including looking at the mean, median, range, and interquartile range. Afterwards, the weight and the height of players were visualised graphically using the histogram and it was found that they are distributed normally (for the most part). It is also understood that there might not have been enough data to form a ‘perfect’ normal distribution. Later, density lines were added to the plots (which were essentially smoothed version of the histogram). On the whole, there isn’t anything notable about the weight or height. 
+
+### **Visualising data in Salary**
+
+```{r}
+# Visualising a summary of the data in 'Salary'.
+summary(myUpdatedSubset$Salary)
+```
+
+```{r}
+# Visualising the ‘Salary’ attribute by plotting a bar chart.
+ggplot(myUpdatedSubset, aes(x=Salary)) + geom_bar(color="purple", fill="purple") + theme_bw() + ggtitle("Histogram of Players' Salary") + xlab("Salary of Players") + ylab("Number of Players (with Salary)") 
+```
+
+Upon visualising the salary attribute from the dataset, it was found that quite a few players had a salary that was classified as being from the lower end of the spectrum whereas a few players had an ‘extremely high’ salary. It should be noted that this was not evenly distributed as well, with only a few players having a very high salary. Since this dataset contains data from the real world, which is known to have a skewed salary distribution (Thewissen, et al., 2015), it is understandable that this is the distribution of salary.
+
+### **Visualising data in Birth Date, Career Length, and Age**
+
+**Birth Date**
+
+```{r}
+# Visualising a summary of the data in 'BirthDate'.
+summary(myUpdatedSubset$BirthDate)
+```
+
+**Career Length**
+
+```{r}
+# Visualising a summary of the data in 'CareerLength'.
+summary(myUpdatedSubset$CareerLength)
+```
+
+```{r}
+# Visualising the ‘CareerLength’ attribute by plotting a bar chart.
+ggplot(myUpdatedSubset, aes(x=CareerLength)) + geom_bar(color="purple", fill="purple") + theme_bw() + ggtitle("Bar Chart of CareerLength") + xlab("Career Length of Players") + ylab("Number of Players") 
+```
+
+**Age**
+
+```{r}
+# Visualising a summary of the data in 'Age'.
+summary(myUpdatedSubset$Height)
+```
+
+```{r}
+# Visualising the ‘Age’ attribute by plotting a bar chart.
+ggplot(myUpdatedSubset, aes(x=Age)) + geom_bar(color="purple", fill="purple") + theme_bw() + ggtitle("Bar Chart of Players' Age") + xlab("Age of Players") + ylab("Number of Players") 
+```
+
+Seeing at the date of birth is different for each player, further analysis cannot be carried out on this attribute. There is a range of different ages and career lengths available for the different players. It should be noted that since the age and career length of players are represented as double values, almost none of the players have the same age or career length – which would not be the case if these numbers were integer. Not much can be said about these attributes when visualising them individually, therefore, further analysis would be carried out looking at these attributes along with others. 
+
+### **Visualising data in Bats**
+
+```{r}
+# Visualising a summary of the data in 'Bats'.
+summary(myUpdatedSubset$Bats)
+```
+
+```{r}
+# Visualising the ‘Bats’ attribute by plotting a bar chart.
+ggplot(myUpdatedSubset, aes(x=Bats)) + geom_bar(color="purple", fill="purple") + theme_bw() + ggtitle("Bar Chart of Batting Hand") + xlab("Batting Hand of Players") + ylab("Number of Players") 
+
+# Batting Hand
+# B: Both (i.e. ambidextrous players)
+# L: Left
+# R: Right
+```
+
+Visualising the data in the ‘Bats’ attribute showed that a majority of the players used their right hand to play, with only half as many players using their left hand, and only a very small portion of players using both. The ratio of this can be written as follows: 1:4:8 [Both: Left: Right].
+
+### **Visualising data in Hit Ind**
+
+```{r}
+# Visualising a summary of the data in 'HitInd'.
+table(myUpdatedSubset$HitInd)
+```
+
+```{r}
+# Visualising the ‘HitInd’ attribute by plotting a bar chart.
+ggplot(myUpdatedSubset, aes(x=HitInd)) + geom_bar(color="purple", fill="purple") + theme_bw() + ggtitle("Bar Chart of Hit Ind") + xlab("Hit Ind") + ylab("Number of Players")
+```
+
+Upon visualising the data in the ‘HitInd’ column, it can be said that almost a similar number of players have scored or not scored a hit in the 2015 season. This attribute by itself might not provide a lot of insights, however, the correlation between ‘HitInd’ and other variables might need to be looked at. 
+
+### **Exploring Covariation Between Attributes**
+
+*Having visualised each attribute separately, multiple attributes and their relationships between each other can be looked at*
+
+```{r}
+# Using an 'int_breaks' function to ensure that only integer values are displayed on the y axis of plots (where it is not possible to have double values).
+# [source: https://stackoverflow.com/questions/15622001/how-to-display-only-integer-values-on-an-axis-using-ggplot2]
+int_breaks <- function(x, n = 100) {
+  l <- pretty(x, n)
+  l[abs(l %% 1) < .Machine$double.eps ^ 0.5] 
+}
+```
+
+It should be noted that the process of EDA is not to ‘thoughtlessly’ visualise plots for all of the different attributes against all of the other attributes, but rather to understand more about the data to be able to carry out further analysis and modelling. In this case, research questions involve salary and hitind. It was found that hits count is highly correlated to a few other attributes during the data cleaning, therefore, this could be explored. Further, since it was found that career length has an effect on the salary (and the salary was going to be used for modelling), it was decided that this was going to be explored as well. Since there are two teams in the dataset, it was thought that understanding any significant differences between the teams would be important. In summary, the attributes that are going to be explored further include: 
+
+- Team ID
+- Hits
+- Salary
+- Career Length
+- HitInd
+
+### **Variation between Team ID and other attributes**
+
+Since data about players from two teams (Boston Red Sox & Texas Rangers) were available, the variation of all the other attributes compared to the players of the two teams can be looked at. This will show if players from one team have attributes that are significantly different to the other team or if both teams have attributes that are similar. To do this, box plots can be used, where all of the different attributes are plotted (separately) against the Team ID.
+
+```{r}
+# Visualising the Variation of 'GamesCount' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = GamesCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'GamesCount' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'RunsCount' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = RunsCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'RunsCount' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'HitsCount' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = HitsCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'HitsCount' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'AtBatCount' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = AtBatCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'AtBatCount' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'RunsBattedInCount' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = RunsBattedInCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'RunsBattedInCount' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'Weight' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = Weight)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Weight' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'Height' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = Height)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Height' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'Salary' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = Salary)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Salary' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'CareerLength' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = CareerLength)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'CareerLength' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+
+# Visualising the Variation of 'CareerLength' between the two teams using a Frequency Polygon.
+ggplot(data = myUpdatedSubset, mapping = aes(x = CareerLength, colour = TeamID)) + geom_freqpoly(binwidth = 0.1) + theme_bw() + ggtitle("Variation of 'CareerLength' between the two teams") + xlab("Career Length of Players") + ylab("Players") + scale_y_continuous(breaks = int_breaks)
+
+# Visualising the Variation of 'Age' between the two teams using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = TeamID, y = Age)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Age' between the two teams") + xlab("Team ID") + ylab("Players") + theme(legend.position="none")
+```
+
+Upon visualising the variation between the teams using box plots, the following can be said. It was found that ‘Games’, ‘Runs’, ‘Hits’, ‘AtBat’, and ‘RunsBattedIn’ all had similar counts between the two teams, with BOS having a slightly higher (almost insignificant) variation for almost each of these attributes. The mean values of TEX was also slightly higher for each attribute, but this was insignificant as well. In terms of the weight and height, there is a clear difference, with the TEX team having an overall higher weight and height. The overall variation for both the teams are the same, so it can be understood that generally players in the TEX team are taller and weigh more than players in the BOS team. While the mean of the salaries are the same, there is a much higher variation in the salaries of player in the BOS team, which might be insightful for the modelling process. The career lengths of players in both teams were almost the same, therefore, a frequency polygon was used to explore this, which further proved the previous findings. While there was a difference in the mean ages of the players in both teams, the variation was very similar. 
+
+On the whole, only the variation in salary is notable – which might be useful during the modelling process.
+
+### **Variation between Hits and other attributes**
+
+The hits attribute can be visualised using a scatter plot, comparing it to all other attributes. 
+
+```{r}
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'GamesCount'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = GamesCount)) + geom_point(shape=4, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'GamesCount'") + xlab("Count of Hits") + ylab("Count of Games")
+
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'RunsCount'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = RunsCount)) + geom_point(shape=4, color = "black") + theme_bw() + ggtitle("Scatterplot of HitsCount' vs 'RunsCount'") + xlab("Count of Hits") + ylab("Count of Runs")
+
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'AtBatCount'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = AtBatCount)) + geom_point(shape=4, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'AtBatCount'") + xlab("Count of Hits") + ylab("Count of At Bat")
+
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'RunsBattedInCount'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = RunsBattedInCount)) + geom_point(shape=4, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'RunsBattedInCount'") + xlab("Count of Hits") + ylab("Count of Runs Batted In")
+```
+
+As expected, the plots showed that hits is highly correlated with games, runs, at bat, and runs batted in, with all of them having almost a liner relationship. It was also found that a number of players had these counts be zero, which is understandable since a big portion of the players has a hits, games, runs, at bat, and runs batted in count of zero. 
+
+Next, all of the other attributes can be visualised against the hits.  
+
+```{r}
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'Weight'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = Weight)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'Weight'") + xlab("Count of Hits") + ylab("Weight")
+
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'Height'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = Height)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'Height'") + xlab("Count of Hits") + ylab("Height")
+
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'Salary'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = Salary)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'Salary'") + xlab("Count of Hits") + ylab("Salary")
+
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'CareerLength'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = CareerLength)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'CareerLength'") + xlab("Count of Hits") + ylab("Career Length")
+
+# Visualising the attributes by using a scatter plot of 'HitsCount' vs 'Age'.
+ggplot(data = myUpdatedSubset, aes(x = HitsCount, y = Age)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'HitsCount' vs 'Age'") + xlab("Count of Hits") + ylab("Age")
+```
+
+There was nothing significant that was found through visualising any of these scatter plots. Most of the points were distributed randomly throughout, with there being almost no correlation between the hits count and any of these variables. 
+
+### **Variation between Salary and other attributes**
+
+Seeing as a model was going to be created using the salary of players, it was decided that the salary was going to be explored against other attributes. Since analysis was previously done, exploring the salary vs other attributes, only attributes that weren’t explored were used in the analysis at this stage. 
+
+```{r}
+# Visualising the attributes by using a scatter plot of 'Salary' vs 'Weight'.
+ggplot(data = myUpdatedSubset, aes(x = Salary, y = Weight)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Salary' vs 'Weight'") + xlab("Salary") + ylab("Weight")
+
+# Visualising the attributes by using a scatter plot of 'Salary' vs 'Height'.
+ggplot(data = myUpdatedSubset, aes(x = Salary, y = Height)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Salary' vs 'Height'") + xlab("Salary") + ylab("Height")
+
+# Visualising the attributes by using a scatter plot of 'Salary' vs 'CareerLength'.
+ggplot(data = myUpdatedSubset, aes(x = Salary, y = CareerLength)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Salary' vs 'CareerLength'") + xlab("Salary") + ylab("Career Length")
+
+# Visualising the attributes by using a scatter plot of 'Salary' vs 'Age'.
+ggplot(data = myUpdatedSubset, aes(x = Salary, y = Age)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Salary' vs 'Age'") + xlab("Salary") + ylab("Age")
+```
+
+These plots showed that the weight, height, and age has almost no effect on the salary, with the points being randomly spread out. Although not a one to one relationship, it was clear that the career length and salary were correlated (i.e. an increase in the career length lead to an increase in the salary). This needs to be kept in mind when building the salary model, since career length needs to be one of the attributes that are definitely included in the model. 
+
+### **Variation between Career Length and other attributes**
+
+Since career length and salary are correlated (which was further confirmed by looking at the plots), it was decide that career length would be explored further to understand which other attributes affect the career length. 
+
+```{r}
+# Visualising the attributes by using a scatter plot of 'CareerLength' vs 'Weight'.
+ggplot(data = myUpdatedSubset, aes(x = CareerLength, y = Weight)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Career Length' vs 'Weight'") + xlab("Career Length") + ylab("Weight")
+
+# Visualising the attributes by using a scatter plot of 'CareerLength' vs 'Height'.
+ggplot(data = myUpdatedSubset, aes(x = CareerLength, y = Height)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Career Length' vs 'Height'") + xlab("Career Length") + ylab("Height")
+
+# Visualising the attributes by using a scatter plot of 'CareerLength' vs 'Birthdate'.
+ggplot(data = myUpdatedSubset, aes(x = CareerLength, y = Birthdate)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Career Length' vs 'Birthdate'") + xlab("Career Length") + ylab("Birthdate")
+
+# Visualising the attributes by using a scatter plot of 'CareerLength' vs 'Age'.
+ggplot(data = myUpdatedSubset, aes(x = CareerLength, y = Age)) + geom_point(shape=1, color = "black") + theme_bw() + ggtitle("Scatterplot of 'Career Length' vs 'Age'") + xlab("Career Length") + ylab("Age")
+```
+
+The scatter plots showed that the career length of players was not affected by the weight or height of players. Both the scatter plots of weight and height had points that were distributed randomly throughout, with nothing that was significant or notable. The plot of career length vs date of birth showed that there was an inverse relationship between these two attributes (i.e. the further away the date of birth from the current day [2015 season], the longer the career length). This makes sense since players that were born earlier are likely to have a longer career length since they are older. This plot of age and career length also showed a significant relationship, with the career length increasing along with age. This is untestable as well since older players are likely to have a longer career length. 
+
+### **Variation between HitInd and other attributes**
+
+Since the second research question is based around the ‘HitInd’ (i.e. building a logistic regression model using ‘HitInd’), it was decided that this attribute would need to be explored further.
+
+```{r}
+# Visualising the Variation of 'GamesCount' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = GamesCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'GamesCount' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Games Count") + theme(legend.position="none")
+
+# Visualising the Variation of 'RunsCount' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = RunsCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'RunsCount' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Runs Count") + theme(legend.position="none")
+
+# Visualising the Variation of 'HitsCount' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = HitsCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'HitsCount' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Hits Count") + theme(legend.position="none")
+
+# Visualising the Variation of 'AtBatCount' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = AtBatCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'AtBatCount' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("At Bat Count") + theme(legend.position="none")
+
+# Visualising the Variation of 'RunsBattedInCount' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = RunsBattedInCount)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'RunsBattedInCount' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Runs Batted In Count") + theme(legend.position="none")
+
+# Visualising the Variation of 'Weight' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = Weight)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Weight' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Weight") + theme(legend.position="none")
+
+# Visualising the Variation of 'Height' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = Height)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Height' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Height") + theme(legend.position="none")
+
+# Visualising the Variation of 'Salary' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = Salary)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Salary' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Salary") + theme(legend.position="none")
+
+# Visualising the Variation of 'CareerLength' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = CareerLength)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'CareerLength' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Career Length") + theme(legend.position="none")
+
+# Visualising the Variation of 'Age' compared to the 'HitInd' using a box plot.
+ggplot(data = myUpdatedSubset, aes(x = HitInd, y = Age)) + geom_boxplot(color="blue", fill="purple", alpha=0.2) + theme_bw() + ggtitle("Variation of 'Age' compared to the 'HitInd'") + xlab("Hit Ind") + ylab("Age") + theme(legend.position="none")
+```
+
+The plot of ‘GamesCount’ showed that the number of games played by a player was, on average, higher for players that scored a hit. This makes sense since players that scored at least one hit in the season was more likely to be in more games. Looking at the plots of ‘RunsCount’, ‘HitsCount’, ‘AtBatCount’, and ‘RunsBattedInCount’ showed that any player that did not score a hit in the season had zero values for all of these attributes, while players that scored at least one hit in a given season (2015) had a variation of values for these attributes. This makes sense as well since a player needs to score a hit before their runs, hits, at bat, or runs batted in counts increase. The plot of weight showed that there was not a big difference in variation between a player that scores a hit in a season and one that does not. Therefore, it can be understood that weight might not have a big impact on the ability to score a hit (and might not need to be included in the model). The plot of height showed that shorter players might have a higher chance of scoring a hit in a given season – which might need to be considered during the modelling stage. Using the plot, it can be understood that the salary of a player definitely does have an impact on the overall ability for a player to make a hit in the season. This makes sense since it is likely that ‘good’ players that are able to make a hit get a higher salary. The plot of career length also shows players with a longer career length have scored a hit, which means that an increased career length might have an impact on the ability to score a hit. This makes sense when thought about logically, since players with more experience would be more likely to score a hit. While not significant, the plot of age also showed that older players are more likely to score a hit than a younger player. 
+
+Looking at all of these plots, it can be said that the count of games, runs, hits, at bat, runs batted in, height, salary, career length, and age might have an effect on a player’s ability to score a hit. These insights might be useful when building a model of ‘HitInd’.
+
+## 2.3 Additional insights and issues {#H23}
+
+Additional insights and issues relating to Exploratory Data Analysis were addressed in the previous section itself (Section 2.2), with further analysis being carried out whenever it was needed. 
+
+# 3. Modelling {#H3}
+
+Before carrying out any analysis or modelling, it should be noted that statistical analysis is an iterative process where all of the different stages (which include: defining/understanding the *problem* at hand, *planning* the method to go about solving it, finding and/or collecting the *data* needed, carrying out *analysis* on the data, and drawing *conclusions* from this analysis) needs to be considered from end to end. 
+
+## 3.1 Build a model for player salary {#H31}
+
+When it comes to building a model given the research question (i.e. target attribute of salary), the best approach would be to use multiple regression since there is more than one attribute (GamesCount, RunsCount, HitsCount, AtBatCount, RunsBattedInCount, Weight, Height, and so on) that might affect the dependent variable (Salary). Linear regression is the process of modelling two numerical variables (one explanatory variable and one dependent variable) to be able to understand their relationship and use this for further analysis. Multiple regression is an extension of simple linear regression (Tranmer & Elliot, 2008) where multiple variables are modelled (multiple explanatory variables and one dependent variable).
+
+A typical model of this kind could be represented as follows:
+
+$$Y =  \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} +\ ...\ + \beta_{k}X_{k} +  \varepsilon$$
+
+Where $\varepsilon$ is the error term, E($\varepsilon$)=0 and Var($\varepsilon$)=$\sigma^{2}$
+
+It should be noted that all of the variables/attributes (both the dependent variable and all of the explanatory variables) needs to be numerical when building a model of this sort.
+
+Seeing as all of the attributes that are going to be used in the model needs to be numerical, a new subset can be created that contains only numerical variables. This can be done in a number of different ways, with two methods being shown below:
+
+```{r}
+# Creating new modelling subset.
+myModellingSubset <- myUpdatedSubset
+
+# Removing non-numeric attributes.
+myModellingSubset$PlayerID <- NULL
+myModellingSubset$TeamID <- NULL
+myModellingSubset$Birthdate <- NULL
+myModellingSubset$Bats <- NULL
+
+# Changing data type of HitInd - to be used in the model.
+myModellingSubset$HitInd <- as.double(myModellingSubset$HitInd)
+
+# An alternative method of creating a subset with only numeric attributes.
+#myModellingSubset <- myUpdatedSubset[,sapply(myUpdatedSubset, is.numeric)]
+
+# Visualising the new subset.
+head(myModellingSubset)
+```
+
+Before beginning the process of modelling, it should be noted that multiple regression is sometimes considered to be one of the most statistical models with the process of carrying out multiple regression being considered ‘challenging’ as well. It is also important to consider several important statistical issues (Crawley, 2015) relating to multiple regression before beginning the process of modelling. 
+
+The data cleaning and EDA previously carried out gave insights into the different attributes of the dataset. This also showed the correlations between some of the variables, making it possible to only include one highly correlated variable in the model. EDA carried out also gave further insights into the target attribute (Salary) when compared to all of the other attributes. 
+
+One of those issues that is going to affect the modelling of this dataset is the one about (numerical) explanatory variables being highly correlated to each other. Through the process of data cleaning and EDA, it was found that the ‘GamesCount’, ‘RunsCount’, ‘HitsCount’, ‘AtBatCount’, and ‘RunsBattedInCount’ are all highly correlated to each other. Therefore, it was understood that only one of these variables could be used in the model.
+
+While it was also found that the salaries of the two teams might be different on average, the team id was not used on this model (since it contained only numerical variables).
+
+Multiple regression is where the notion that *“all models are wrong, but some are useful”* is used, with it being the job of a statistician/data scientist to find a useful model from a given dataset.
+
+There are a number of ways of starting the process of multiple regression and a number of ways to categorise models (null model, minimal adequate model, current model, and so on) with the minimal adequate model being the ideal outcome of this modelling process. It is thought that the minimal adequate model is one that has a good enough r-squared value (more details of which can be found below), but does not contain anything ‘unnecessary’.
+
+### Model Building
+
+When it comes to building a multiple regression model given a research question, a number of steps will need to be followed. The first step usually is to load the data correctly, which has been done already in this instance. The next step usually is to visualise the dataset numerically and graphically – for which the ‘summary’ function will be used. The data from this dataset was already visualised graphically in the previous section (with the findings being reported as well), therefore, further graphical visualisation does not need to be carried out. 
+
+```{r}
+# Visualising a sumamry of the dataset.
+summary(myModellingSubset)
+```
+
+Since this subset – created specifically for modelling – contains only numerical continuous values, the correlation between the attributes can be found. It is known that the correlation between some of the attributes were found during the data cleaning and EDA stages, however, it is thought that looking at the correlation between all the attributes on the whole is important. 
+
+```{r}
+# Visualising the correlation between the attributes.
+cor(myModellingSubset)
+```
+
+As part of visualising the data in this new subset, a matrix of scatterplots with all of the different attributes could be looked at to gather further insights.
+
+```{r}
+# Visualising a matrix of scatterplots (for all of the different attributes).
+pairs(myModellingSubset,panel=panel.smooth)
+```
+
+Upon looking at the correlations between the attributes, it was found that the attributes ‘GamesCount’, ‘RunsCount’, ‘HitsCount’, ‘AtBatCount’, and ‘RunsBattedInCount’ were highly correlated (as previously discovered as well). Due to this multi collinearity, it was decided that only one of these explanatory variables would be used in the model. While not as significant, there was some correlation found between the ‘CareerLength’ and ‘Age’ attributes as well. 
+
+The correlation between salary and all of the highly correlated variables (‘GamesCount’, ‘RunsCount’, ‘HitsCount’, ‘AtBatCount’, and ‘RunsBattedInCount’) can be calculated separately as well – to determine which attribute to use in the model. The lines of code used for this have been commented out since the previously used ‘cor’ function calculated the correlation between all of the attributes.  
+
+```{r}
+# Calculating the correlation between Salary & GamesCount.
+#cor.test(myModellingSubset$Salary, myModellingSubset$GamesCount)
+
+# Calculating the correlation between Salary & RunsCount.
+#cor.test(myModellingSubset$Salary, myModellingSubset$RunsCount)
+
+# Calculating the correlation between Salary & HitsCount.
+#cor.test(myModellingSubset$Salary, myModellingSubset$HitsCount)
+
+# Calculating the correlation between Salary & AtBatCount.
+#cor.test(myModellingSubset$Salary, myModellingSubset$AtBatCount)
+
+# Calculating the correlation between Salary & RunsBattedInCount.
+#cor.test(myModellingSubset$Salary, myModellingSubset$RunsBattedInCount)
+```
+
+It was decided that the ‘RunsBattedInCount’ would be used in the initial model. If an appropriate model is not found, a different attribute could be built later on.
+
+### Building the baseballMaxModel
+
+As the initial step, all of the continuous explanatory variables would be used to build a maximal model for the baseball dataset.
+
+```{r}
+# Building a maximal model for the baseball dataset.
+baseballMaxModel <- lm(Salary~RunsBattedInCount+Weight+Height+CareerLength+Age+HitInd, data=myModellingSubset)
+# Visualising a summary of the model created.
+summary(baseballMaxModel)
+```
+
+*Having built an initial model, the model characteristics (including the goodness of fit) and relevant diagnostics can be looked at to critique the model*
+
+## 3.2 Critique model using relevant diagnostics {#H32}
+
+Usually after building a model, the model characteristics (including the goodness of fit) can be looked at to understand the model better. This can be done by using the ‘summary’ function - which produces insights about the model. While the ‘summary’ function produces a number of statistics relating to the model, a number of main values need to be looked at.
+
+- **F ratio** [F-statistic]: which shows the ratio between the two variances. 
+- **Degree of Fit (r^2)** [Multiple R-squared]: where the variance difference explained by the model needs to be bigger than the variance explained by the error. This value is looked at since simply having a variance difference is not actually enough. 
+- **Significance of r coefficients** [p-value]: where the r coefficient needs to be significant.
+- **Residual Standard Error** [Residual standard error]: is the difference in standard deviations of the observed values versus the predicted values  (Kenton, 2020).
+
+In addition to looking at different statistics, diagnostic plots (Portugués, 2020) can be looked at to gather further insights about the model.
+
+This can be done by using the 'plot' function which usually produces four graphs:
+
+- **The first plot [Residuals vs Fitted]** shows the residuals on the y-axis vs. the fitted values on the x-axis and it is thought of as being ideal to have these values be random (as random as possible). A big scatter on one side & none on the other OR a scatter that looks like a curve would mean that the model might be wrong (i.e. these are not random). Portugués’s (2015) examples were used as guidnace to undertand these models. 
+- **The second plot [Normal Q−Q]** also known as the quartile-quartile plot shows the distribution of errors. Ideally, it is thought that these should be distributed normally – which if it is, the plots of the graph should follow a straight line. While it is beneficial to have all of these plots on a straight line, it is thought as being appropriate to almost have them on a straight line. Though, it would not be acceptable if they were in the shape of a curve. 
+- **The third and fourth plots** relate to outliners and influence points in the model and show how it might affect the overall model.
+
+To start investigating the model further, the summary function could be used.
+
+```{r}
+# Visualising a summary of the model created.
+summary(baseballMaxModel)
+```
+
+The results produced is as follows:
+
+- **F ratio** [F-statistic]: 12.81 on 6 and 71 DF
+- **Degree of Fit (r^2)** [Multiple R-squared]: 0.5197
+- **Significance of r coefficients** [p-value]: 9.575e-10
+- **Residual Standard Error** [Residual standard error]: 4746000 on 71 degrees of freedom
+
+Using these results, it can be said that this model has an F score and an r squared value that is considered to be fine (not great). Further, it is clear that some of the attributes in the model are not significant, concluding that the model needs to be simplified.
+
+The 'plot' function can be used to look at the diagnostic plots. 
+
+```{r}
+# Visualising the diagnostic plots of the model.
+plot(baseballMaxModel)
+```
+
+Usually, the diagnostic plots are looked at only after an appropriate model is reached. Therefore, analysis of these plots in order to critique the model will be done later in the section. 
+
+Next, the ‘step’ function can be used to achieve a minimal adequate model. The aim of this is to use a minimal number of attributes that have significant impact to the model. Before using the ‘step’ function, the terms deviance and AIC need to be explained since the ‘step’ function produces these statistics.
+
+**Deviance** is a measure of the model fit (the lack of model fit to be exact). Therefore, this depends on the error structure and link function. Due to this, a small deviance means that the model explains a lot of its variability and this is what is wanted. 
+
+**AIC (Akaike Information Criterion)** is another measure of model fit that takes into account the number of parameters and is found using:
+$$AIC = deviance + p$$
+Where p is the number of parameters. Similar to the deviance, having a low AIC would be what is ideally expected. 
+
+A model with a lot of parameters could have a low deviance, however, AIC takes into account to number of parameters and therefore will not have a low AIC. AIC is important since adding parameters increases the complexity, but this is not reflected on the deviance value.
+
+```{r}
+# Using the ‘step’ function can be used to achieve a minimal adequate model.
+step(baseballMaxModel)
+```
+
+### Building the baseballMinModel
+
+The results from the step function can be used to build the minimal adequate model.
+
+```{r}
+# Building a minimal adequate model.
+baseballMinModel <- lm(Salary~Weight+CareerLength+HitInd, data=myModellingSubset)
+
+# Visualising a summary of the model created.
+summary(baseballMinModel)
+```
+
+The results produced is as follows:
+
+- **F ratio** [F-statistic]: 12.81 on 6 and 71 DF
+- **Degree of Fit (r^2)** [Multiple R-squared]: 0.5197
+- **Significance of r coefficients** [p-value]: 9.575e-10
+- **Residual Standard Error** [Residual standard error]: 4711000 on 74 degrees of freedom
+
+While this model is significantly simpler than the previous model, it is clear that not all of the attributes in this model are significant. However, the F score and r squared values seem to be fine so it was decided that further inspection could be carried out on the model (i.e. look at the diagnostic plots).
+
+Seeing as the weight in the ‘baseballMinModel’ was not significant, a new model was built removing the weight (the code used for this has been commented out). However, it was found that removing this reduced the goodness of fit and the percentage of the model that was explained by the variance. Therefore, it was decided that the previous model would be left as it is. 
+
+```{r}
+# Building a minimal adequate model.
+#baseballMinModel02 <- update(baseballMinModel,~.-Weight)
+
+# Visualising a summary of the model created.
+#summary(baseballMinModel02)
+```
+
+### Building the baseballMaxModel02
+
+It was also clear that the binary explanatory variable (‘HitInd’) added to the baseballMaxModel does not add any significance to the model. Therefore, a new model can be created without the binary explanatory variable. 
+This can be done using a number of different methods, two of which have been demonstrated (with one method being commented out).
+
+```{r}
+# Creating new model - after removing one variable.
+baseballMaxModel02 <- update(baseballMaxModel,~.-HitInd)
+
+# Alternative method of creating the same model:
+# Building a model for the baseball dataset - without the binary explanatory variable.
+#baseballMaxModel02 <- lm(Salary~RunsBattedInCount+Weight+Height+CareerLength+Age, data=myModellingSubset)
+
+# Visualising a summary of the model created.
+summary(baseballMaxModel02)
+```
+
+The results produced is as follows:
+
+- **F ratio** [F-statistic]: 14.26 on 5 and 72 DF
+- **Degree of Fit (r^2)** [Multiple R-squared]: 0.4976
+- **Significance of r coefficients** [p-value]: 1.081e-09
+- **Residual Standard Error** [Residual standard error]: 4820000 on 72 degrees of freedom
+
+Upon removing one variable from the model, it is important to understand if this dropped variable lead to a significant different in the different statistics (F ratio, Degree of Fit (r^2), Significance of r coefficients, and Residual Standard Error). To check this, all of the statistics can be looked at side by side:
+
+- Statistics for 'baseballMaxModel' with binary explanatory variable | Statistics for 'baseballMaxModel02' without binary explanatory variable
+- **F ratio** [F-statistic]: 12.81 on 6 and 71 DF | 14.26 on 5 and 72 DF
+- **Degree of Fit (r^2)** [Multiple R-squared]: 0.5197 | 0.4976
+- **Significance of r coefficients** [p-value]: 9.575e-10 | 1.081e-09
+- **Residual Standard Error** [Residual standard error]: 4746000 on 71 degrees of freedom | 4820000 on 72 degrees of freedom
+
+It is clear that there is no significant difference in any of the statistics, confirming that removing the binary explanatory variable was seen as being appropriate. This is because the aim is to have a minimum number of variables that significantly impact the model.
+
+### Building the baseballTreeModel
+
+It should be noted that there is another way in which a model could be built. This would take into account the different interactions between the explanatory variables.  A regression tree could be built to check for interactions in the dataset. Two methods for building the tree model have been demonstrated, with the second method (used only because all of the attributes are included in the model) being commented out.
+
+```{r}
+# Building a model to check for interactions.
+baseballTreeModel<-tree(Salary~GamesCount+RunsCount+HitsCount+AtBatCount+RunsBattedInCount+Weight+Height+CareerLength+Age+HitInd,data=myModellingSubset)
+
+# Building a model to check for interactions.
+#baseballTreeModel<-tree(Salary~.,data=myModellingSubset)
+
+# Plotting the tree model.
+plot(baseballTreeModel)
+text(baseballTreeModel)
+```
+
+Using the tree model it is clear that the career length is the attribute that is most significantly affecting the salary. It was also clear that the games count and age were the two other attributes that affect the salary. 
+
+Seeing as there are only three attributes affecting the salary, it was decided that the most complex version of a model that includes these three attributes could be built. 
+
+```{r}
+# Building a model using the interactions.
+baseballTreeModel <- lm(Salary~GamesCount+CareerLength+Age+I(GamesCount^2)+I(CareerLength^2)+I(Age^2), data=myModellingSubset)
+
+# Visualising a summary of the model created.
+summary(baseballTreeModel)
+```
+
+The results produced is as follows:
+
+- **F ratio** [F-statistic]: 4748000 on 71 degrees of freedom
+- **Degree of Fit (r^2)** [Multiple R-squared]: 0.5192
+- **Significance of r coefficients** [p-value]: 9.928e-10
+- **Residual Standard Error** [Residual standard error]: 4748000 on 71 degrees of freedom
+
+While this model does contain attributes that significantly affect it, there are a number of attributes that do not significantly affect the model. Therefore, it was decided that this model could be simplified further using the step function.
+
+```{r}
+# Using the ‘step’ function can be used to achieve a minimal adequate model.
+step(baseballTreeModel)
+```
+
+### Building the baseballTreeStepModel
+
+The minimal adequate model found using the step function could now be built.
+
+```{r}
+# Building a model using the interactions.
+baseballTreeStepModel <- lm(Salary~CareerLength+I(GamesCount^2)+I(CareerLength^2), data=myModellingSubset)
+
+# Visualising a summary of the model created.
+summary(baseballTreeStepModel)
+```
+
+The results produced is as follows:
+
+- **F ratio** [F-statistic]: 25.35 on 3 and 74 DF
+- **Degree of Fit (r^2)** [Multiple R-squared]: 0.5069
+- **Significance of r coefficients** [p-value]: 2.181e-11
+- **Residual Standard Error** [Residual standard error]: 4711000 on 74 degrees of freedom
+
+Since this model contains an F score and r squared value that could be considered as being ‘fair’, and all of the attributes in this model are significant, it was decided that this model would be explored further.
+
+### Models Built:
+
+On the whole, five main models were built in this section.
+
+- baseballMaxModel: containing all of the different numerical attributes from the dataset (including one of the highly correlated attributes). 
+- baseballMaxModel02: containing all of the different numerical attributes from the dataset (including one of the highly correlated attributes) – except ‘HitInd’.
+- baseballMinModel: minimal adequate model which was produced by the step function. 
+- baseballTreeModel: model built taking into consideration all of the different interactions. 
+- baseballTreeStepModel: minimal adequate model taking into consideration all of the different interactions. 
+
+Model building is usually a sequential process where one model is critiqued, then improved, then critiqued again, until a model that is appropriate is produced. Therefore usually, there is only one model with which diagnostics plots are used. However, since both models were seen as being ‘appropriate’, diagnostics plots for both can be visualised to critique them further.
+
+*The previously given description of the plot function will be used to interpret these diagnostic plots*
+
+```{r}
+# Visualising the diagnostic plots of the model.
+plot(baseballMinModel)
+```
+
+The results produced is as follows:
+
+- **The first plot [Residuals vs Fitted]:** while this graph follows a general straight line, a cluster of points can be identified on one side of the plot. The reason for this might be a violating of the linearity assumption as explained by Portugués (2020). A few outliers can also be identified from this plot, plot 28, 29, and 59 to be exact. 
+- **The second plot [Normal Q−Q]:** while the general shape of this plot can be interpreted to be a diagonal line, looking at the plot in detail shows that there is more of an ‘S’ shape rather than a straight line. It can be thought that this is also due to a violating of the linearity assumption. This plot also showed that there were some outliers in the model, point 24, 28, and 29 to be exact.
+- **The third and fourth plots [Scale-Location] & [Residual vs Leverage]:** while these plots looked at the outliners and influence points in the model, it shows that the plots are ‘fine’ at a high level. It is notable that these plots also highlighted a few points that were outliers (point 24, 28, and 29 in the third plot | point 24, 29, and 39 in the fourth plot). 
+
+This model has a good F score and r squared value, the plots show that the model is ‘fine’ (with the exception that there might be a violating of the linearity assumption). It was also found that there were a few outliers as well (point 24, 28, 29, 39, and 59). 
+
+The coefficients of this model can be looked at the generate the equation for this model. 
+
+```{r}
+# Visualising the model coefficients.
+coef(baseballMinModel)
+```
+
+Using the coefficients, the equation for the model would be as follows.
+
+$$Salary =  45469.37*Weight + 996155.95*Career\ Length + 3037166.97*Hit\ Ind -10829772.41$$
+
+The diagnostics plots of the ‘baseballTreeStepModel’ can also be looked at.
+
+```{r}
+# Visualising the diagnostic plots of the model.
+plot(baseballTreeStepModel)
+```
+
+The results produced is as follows:
+
+- **The first plot [Residuals vs Fitted]:** this graph follows a general straight line, with a very small cluster of points on one side of the plot – which is not significant. Due to this, it can be said that no problems identified with this plot. A few outliers can also be identified from this plot, point 10, 28, and 29 to be exact. 
+- **The second plot [Normal Q−Q]:** most of the points in this plot definitely follow a straight line, with the exception of a few outliers (point 10, 28, and 29). Due to this, it can be said that no problems identified with this plot as well.
+- **The third and fourth plots [Scale-Location] & [Residual vs Leverage]:** while these plots looked at the outliners and influence points in the model, it shows that the plots are ‘fine’ at a high level. It is notable that these plots also highlighted a few points that were outliers (point 10, 28, and 29in the third plot | point 28, 29, and 39 in the fourth plot). 
+
+This model has a good F score and r squared value, the plots show that the model is ‘fine’. When comparing these findings to the previous model, it could also the thought that this model is ‘better’. In addition to this, it was also found that there were a few outliers as well (point 10, 28, 29, and 39). The fact that some of these points were found to be outliers in both models confirms that there is indeed a problem with a few of these points.
+
+The coefficients of this model can be looked at the generate the equation for this model. 
+
+```{r}
+# Visualising the model coefficients.
+coef(baseballTreeStepModel)
+```
+
+Using the coefficients, the equation for the model would be as follows. 
+
+$$Salary =  1745543.43*Career\ Length + 242.83*Games\ Count^{2} - 53376.14*Career\ Length^{2} -2326806.83$$
+
+To reiterate, the model building process is usually done sequentially, however, the plots of two different models were looked at (together) in this instance because two different approaches were used to build these models. This also provided the chance to demonstrate how different diagnostic plots could be interpreted. 
+
+To conclude, it was decided that the ‘baseballTreeStepModel’ (with the equation $Salary =  1745543.43*Career\ Length + 242.83*Games\ Count^{2} - 53376.14*Career\ Length^{2} -2326806.83$) was the best model as it contained a good F score, good r squared value, and the diagnostic plots showed that this model was appropriate. However, this model could also be improved further, more information for which can be found in the next section.
+
+## 3.3 Suggest improvements to your model {#H33}
+
+When a model is deemed to not be appropriate for the given research question, regardless of whether liner regression or multiple regression was used, it is thought that model transformation would be the best solution for this. When transforming a model, there are a number of different options that can be used, which includes (but not limited to):
+
+- Log X
+- Log Y
+- Asymptotic 
+- Reciprocal
+- Power Law
+- Exponential
+
+An example could be used to demonstate how model transformation should usually work. If a linear regression model is in the from "y = a + bx" and is seen as not being the right model for the correlation equation, a model transformation could be carried out where ‘Log X’ or ‘Log Y’ could be used instead of X or Y respectively. 
+
+Log X: y = a + b*(logx)
+$$y = a\ +\ b \times \log x$$
+
+Log Y: logy = a + bx could also be written as y = exp(a + bx)
+$$y = {exp} (a\ +\ b x)$$
+
+This is done in the hope that this newly transformed model is a better suited model for the given research question. It should be noted that while the steps for model transformation are not straightforward (i.e. set in stone) and is usually a case of trial and error, the ‘model characterises, goodness of fit, and diagnostics plots’ give some insights as to which transformation needs to be applied. 
+
+*This information can now be used to suggest improvements or an alternate approach to model building to address the findings from the previous sections*
+
+Using the insights found during the process of critiquing the model, an appropriate transformation can be applied. 
+
+### Log X Transformation
+
+From the insights gained by using the diagnostic plots, the Log X transformation could be appropriate for this model. The piece of code that can be used to carry out this transformation on the ‘baseballTreeStepModel’ can be found below. After carrying out the transformation, the summary of the model is looked at (i.e. F score and r squared values – similar to before), the model then critiqued and improved as needed. The diagnostic plots can be visualised again at this stage to provide insights as to how any further transformation needs to be carried out. 
+
+```{r}
+# Building a model using the interactions.
+baseballTreeLogModel <- lm(Salary~log(CareerLength)+log(I(GamesCount^2))+log(I(CareerLength^2)), data=myModellingSubset)
+
+# Visualising a summary of the model created.
+summary(baseballTreeLogModel)
+```
+
+As previously stated, this model was built to demonstrate how tranformation could be carried out.
+
+*Alternately, another approach could also be used to build the model*
+
+### Generalised Additive Model Transformation
+
+Another approach would be to use a generalised additive model (Ross, 2020) – which can be used to understand complex datasets. When building models, there are several factors to consider such as flexibility and interpretability. It is known that linear models are easy to interpret (i.e. simple) even though they do not provide a lot of flexibility. On the other hand, machine learning models are flexible, but are not simple to interpret in any way. Further, as a student studying an MSc in Artificial Intelligence, machine learning models require “huge” datasets for them to work – which is sometimes not available. Generalised additive models (Ross, 2020) as seen as the middle ground providing flexibility and interpretability to models, using datasets that are not “huge”. A generalised additive model can be built using the attributes in the ‘baseballTreeStepModel’, with the code used for this being shown below. Similar to before, this model can also be critiqued and improved till an appropriate model is reached. 
+
+```{r}
+# Building a generalised additive model.
+baseballGAMTreeModel <- gam(Salary~CareerLength+I(GamesCount^2)+I(CareerLength^2), data=myModellingSubset)
+
+# Visualising a summary of the model created.
+summary(baseballGAMTreeModel)
+```
+
+Looking at these statistics, it can be said that this is a ‘good’ model with a fair r squared value and a lot of its variance being explained.  
+
+It should be noted that model building and suggesting improvements to a given model involves some trial and error. It should also be understood that a model can always be critiques and in turn, expected to be improved. However, a conscious decision needs to be made to stop the process of critiquing and improving a model once as adequate solution is reached. For example: for the research question given above, either model (Log X, Log Y, or the generalised additive model) could have ‘problems’, but the model building process needs to stop ones an appropriate model has been reached.
+
+In conclusion, both the ‘baseballTreeStepModel’ (last model in the previous section) and the ‘baseballGAMTreeModel’ are seen to be suitable and either could be used depending on the situation. 
+
+# 4. Extension Work {#H4}
+
+## 4.1 Model the likelihood of a player having scored a Hit (using the hit.ind variable provided) {#H41}
+
+When it comes to building any model involving a binary target attribute (i.e. the dependent variable is binary), logistic regression (Le, 2018) should be the type of model to be used. It should be noted that logistic regression is a type of generalised linear model that is used to find the probability of a certain class/event existing or not (i.e. winning/losing, passing/failing, getting accepted/rejected). The explanatory variable can be dependent but the dependent variable always has two outcomes (is binary). It should be noted that this is a type of generalised linear model. 
+
+When looking at logistic regression, three aspects of the output needs to be checked:
+
+- Odds Ratios
+- Coefficients
+- Ideal Relative Model Fit
+
+A second subset will be created to be used for logistic regression model.
+
+```{r}
+# Creating a new modelling subset.
+myModellingSubset02 <- myUpdatedSubset
+```
+
+### Model Building
+
+When it comes to building a logistic regression model given a research question, a number of steps will need to be followed. Similar to the previous model, the first step usually is to load the data correctly, which has been done already in this instance. The next step usually is to visualise the dataset numerically and graphically – for which the ‘summary’ function will be used. The data from this dataset was already visualised graphically in the previous section (with the findings being reported as well), therefore, further graphical visualisation does not need to be carried out.
+
+The data cleaning and EDA previously carried out gave insights into the different attributes of the dataset. This also showed the correlations between some of the variables, making it possible to only include one highly correlated variable in the model. EDA carried out also gave further insights into the target attribute (HitInd) when compared to all of the other attributes. The exploratory data analysis carried out previously showed that the count of games, runs, hits, at bat, runs batted in, height, salary, career length, and age might all have an effect on a player’s ability to score a hit, it was decided that all of these attributes would be included in the initial model.
+
+Since ‘HitInd’ is the dependent variable, the correlation between ‘HitInd’ and all of the highly correlated variables (‘GamesCount’, ‘RunsCount’, ‘HitsCount’, ‘AtBatCount’, and ‘RunsBattedInCount’) can be calculated separately to determine which attribute to use in the model.
+
+As ‘HitInd’ is a factor, it will first need to be converted into a double before the correlation between ‘HitInd’ and the other attributes can be found.
+
+```{r}
+# Changing data type of HitInd. 
+myModellingSubset02$HitInd <- as.double(myModellingSubset02$HitInd)
+```
+
+The correlation between ‘HitInd’ and the other attributes can now be found.
+
+```{r}
+# Calculating the correlation between HitInd & GamesCount.
+cor.test(myModellingSubset02$HitInd, myModellingSubset02$GamesCount)
+
+# Calculating the correlation between HitInd & RunsCount.
+cor.test(myModellingSubset02$HitInd, myModellingSubset02$RunsCount)
+
+# Calculating the correlation between HitInd & HitsCount.
+cor.test(myModellingSubset02$HitInd, myModellingSubset02$HitsCount)
+
+# Calculating the correlation between HitInd & AtBatCount.
+cor.test(myModellingSubset02$HitInd, myModellingSubset02$AtBatCount)
+
+# Calculating the correlation between HitInd & RunsBattedInCount.
+cor.test(myModellingSubset02$HitInd, myModellingSubset02$RunsBattedInCount)
+```
+
+Since it was clear that all of the attributes have a similar correlation, it was decided that the ‘GamesCount’ was going to be used in the model.
+
+The datatype of ‘HitInd’ will now need to be changed back to factor so as to not affect the rest of the modelling process.
+
+```{r}
+# Changing (back) data type of HitInd. 
+myModellingSubset02$HitInd <- as.factor(myModellingSubset02$HitInd)
+```
+
+While it was decided that the 'GamesCount' was going to be used in the model, the commented out code below shows how models could have been built with either of the highly correlated attributes (‘GamesCount’, ‘RunsCount’, ‘HitsCount’, ‘AtBatCount’, and ‘RunsBattedInCount’).
+
+```{r}
+# Building a model logistic regression using 'GamesCount'.
+#hitIndGamesModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$GamesCount+myModellingSubset02$Weight+myModellingSubset02$Height+myModellingSubset02$Salary+myModellingSubset02$Birthdate+myModellingSubset02$CareerLength+myModellingSubset02$Bats+myModellingSubset02$Age, family=binomial)
+
+# Visualising a summary of the model created.
+#summary(hitIndGamesModel)
+
+# Building a model logistic regression using 'RunsCount'.
+#hitIndRunsModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$TeamID+myModellingSubset02$RunsCount+myModellingSubset02$Weight+myModellingSubset02$Height+myModellingSubset02$Salary+myModellingSubset02$Birthdate+myModellingSubset02$CareerLength+myModellingSubset02$Bats+myModellingSubset02$Age, family=binomial)
+
+# Visualising a summary of the model created.
+#summary(hitIndRunsModel)
+
+# Building a model logistic regression using 'HitsCount'.
+#hitIndHitsModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$TeamID+myModellingSubset02$HitsCount+myModellingSubset02$Weight+myModellingSubset02$Height+myModellingSubset02$Salary+myModellingSubset02$Birthdate+myModellingSubset02$CareerLength+myModellingSubset02$Bats+myModellingSubset02$Age, family=binomial)
+
+# Visualising a summary of the model created.
+#summary(hitIndHitsModel)
+
+# Building a model logistic regression using 'AtBatCount'.
+#hitIndAtBatCountModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$TeamID+myModellingSubset02$AtBatCount+myModellingSubset02$Weight+myModellingSubset02$Height+myModellingSubset02$Salary+myModellingSubset02$Birthdate+myModellingSubset02$CareerLength+myModellingSubset02$Bats+myModellingSubset02$Age, family=binomial)
+
+# Visualising a summary of the model created.
+#summary(hitIndAtBatCountModel)
+
+# Building a model logistic regression using 'RunsBattedInCount'.
+#hitIndRunsBattedInCountModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$TeamID+myModellingSubset02$RunsBattedInCount+myModellingSubset02$Weight+myModellingSubset02$Height+myModellingSubset02$Salary+myModellingSubset02$Birthdate+myModellingSubset02$CareerLength+myModellingSubset02$Bats+myModellingSubset02$Age, family=binomial)
+
+# Visualising a summary of the model created.
+#summary(hitIndRunsBattedInCountModel)
+```
+
+A logistic regression model can now be build using the 'GamesCount' (out of all the highly correlated attributes) and all of the other attributes in the dataset. 
+
+```{r}
+# Building a logistic regression model.
+hitIndModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$TeamID+myModellingSubset02$GamesCount+myModellingSubset02$Weight+myModellingSubset02$Height+myModellingSubset02$Salary+myModellingSubset02$Birthdate+myModellingSubset02$CareerLength+myModellingSubset02$Bats+myModellingSubset02$Age, family=binomial)
+
+# Visualising a summary of the model created.
+summary(hitIndModel)
+```
+
+From the summary of the model, it is clear that the ‘GamesCount’, ‘Height’, and ‘Salary’ are significant while the other attributes are not. 
+
+It should be noted that ‘Odds’ and ‘Odds Ratio’ are concepts that are discussed as part of logistic regression. Simply put, **Odds** is the probability of getting one divided by the probability of getting zero and can be written as:
+
+$$odds(Y = 1) = \frac {P(Y = 1)}{1 – P(Y = 1)}$$
+
+This can be simplified and represented as:
+$$odds(Y = 1) = \frac {P(Y = 1)}{P(Y = 0)}$$
+
+**Odds Ratio** is an extension of ‘Odds’ and is another useful measure that takes into account another event [X] having one outcome [a] or the other [b].
+Generally, if the Odds Ratio is equal to one [1], it is thought that the event [Y] is equally likely no matter if ‘X=a’ or ‘X=b’. If the Odds Ratio is more than one [1], it is thought that the event [Y] is more likely to occur when ‘X=a’ than if ‘X=b’. If the Odds Ratio is less than one [1], it is thought that the event [Y] is less likely to occur when ‘X=a’ than if ‘X=b’.
+
+```{r}
+# Visualising the odds ratios.
+exp(coef(hitIndModel))
+```
+
+By looking at these results it can be said that a player in the Texas Rangers team is more likely to score a hit than a player in the Boston Red Sox team. It can also be said that the number of games a player has played in, the weight of a player, height of a player, and career length all slightly affect the chance a player would score a hit, with an increase in any of them leading to an increased chance that the player would score a hit. It is understood that a player batting with the right hand has a higher chance of scoring a hit while an increase in a players’ age would lead to an almost 20% increase in the chance of the player scoring a hit.
+
+Next, the ‘step’ function can be used to simplify the model. The aim of this is to use a minimal number of attributes that have significant impact to the model. It should be noted that the model can be simplified manually as well, remobving attributes that are not significant and visualsing the model again. Attributes can be removed from the model by using the line of code: “hitIndModel02<-update(hitIndModel,~.-TeamID)”.
+
+```{r}
+# Using the ‘step’ function can be used to achieve a minimal adequate model.
+step(hitIndModel)
+```
+
+The simplified model produced by the step function can now be built.
+
+```{r}
+# Building a logistic regression model - after using the step function.
+hitIndStepModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$GamesCount+myModellingSubset02$Height+myModellingSubset02$Salary+myModellingSubset02$Bats, family=binomial)
+
+# Visualising a summary of the model created.
+summary(hitIndStepModel)
+```
+
+Visualising the summary of this newly built simplified model showed that all of the attributes in it are significant except for bats which is not. Therefore, the model can be simplified even further the include only ‘GamesCount’, ‘Height’, and ‘Salary’ (removing bats). It should also be noted that these were the only three attributes that were significant from the initial model that included all of the attributes.
+
+```{r}
+# Building a logistic regression model - after using the step function.
+hitIndStepUpdatedModel <- glm(myModellingSubset02$HitInd~myModellingSubset02$GamesCount+myModellingSubset02$Height+myModellingSubset02$Salary, family=binomial)
+
+# Visualising a summary of the model created.
+summary(hitIndStepUpdatedModel)
+```
+
+As is always the case at this stage of the modelling process, there is not the dilemma of whether to go with the simpler model with the slightly higher AIC or the more complex model with a slightly lower AIC. Due to the fact that it is easier to explain the simpler model, this will be selected. 
+
+*The simpler model which only uses ‘GamesCount’, ‘Height’, and ‘Salary’ will be chosen*
+
+The odds ratios of this model can also be looked at.
+
+```{r}
+# Visualising the odds ratios.
+exp(coef(hitIndStepUpdatedModel))
+```
+
+This states that with an increase in the number of games a player has played, there is almost a 4% (3.5% to be exact) increase in the chance that a player will score a hit. These results also show that a player has a higher chance of scoring a goal with an increase in their height while an increase in a players’ salary would not necessarily affect the chance of them scoring a hit.   
+
+```{r}
+# Visualising the odds ratios.
+exp(cbind(OR=coef(hitIndStepUpdatedModel), confint(hitIndStepUpdatedModel)))
+```
+
+By looking at these results, it is thought that the model could be simplified even further by using the following piece of code that has been commented out. 
+
+```{r}
+# Building a logistic regression model.
+#hitIndStepUpdatedModel02 <- glm(myModellingSubset02$HitInd~myModellingSubset02$GamesCount+myModellingSubset02$Height, family=binomial)
+
+# Visualising a summary of the model created.
+#summary(hitIndStepUpdatedModel02)
+```
+
+While the model could be simplified even further, it is not done since the model is simple as it is and removing another attribute would unnecessarily increase the AIC. 
+
+# References
+
+Crawley, M. J., 2015. *Statistics: an introduction using RJ Wiley*. England: s.n.
+Elgabry, O., 2019. *The Ultimate Guide to Data Cleaning*. [Online] Available at: https://towardsdatascience.com/the-ultimate-guide-to-data-cleaning-3969843991d4 [Accessed 29 December 2020].
+
+ESPN.co.uk, 2020. *MLB raising minimum salary for minor leaguers in 2021*. [Online] Available at: https://www.espn.co.uk/mlb/story/_/id/28702734/mlb-raising-minimum-salary-minor-leaguers-2021 [Accessed 20 December 2020].
+
+Formplus, 2020. *Data Cleaning: Definition, Methods, and Uses in Research*. [Online] Available at: https://www.formpl.us/blog/data-cleaning [Accessed 19 November 2020].
+
+Goldberg, J., 2020. *Exploratory Data Analysis*. [Online] Available at: https://r4ds.had.co.nz/exploratory-data-analysis.html [Accessed 01 December 2020].
+
+Grant, P., 2019. *Understanding Multiple Regression*. [Online] Available at: https://towardsdatascience.com/understanding-multiple-regression-249b16bde83e [Accessed 02 December 2020].
+
+IBM, 2020. *Exploratory Data Analysis*. [Online] Available at: https://www.ibm.com/cloud/learn/exploratory-data-analysis [Accessed 18 November 2020].
+
+Kenton, W., 2020. *Residual Standard Deviation*. [Online] Available at: https://www.investopedia.com/terms/r/residual-standard-deviation.asp [Accessed 29 December 2020].
+
+Le, J., 2018. *Logistic Regression in R Tutorial*. [Online] Available at: https://www.datacamp.com/community/tutorials/logistic-regression-R [Accessed 20 December 2020].
+
+Mathewson, T., 2019. *How young is too young to play professional sports? *. [Online] Available at: https://globalsportmatters.com/culture/2019/04/25/how-young-is-too-young-to-play-professional-sports/#:~:text=The%20NHL's%20age%20minimum%20is,and%2017%20for%20international%20players. [Accessed 18 December 2020].
+
+NHS, 2020. *Height and weight chart*. [Online] Available at: https://www.nhs.uk/live-well/healthy-weight/height-weight-chart/ [Accessed 16 November 2020].
+
+Portugués, E. G., 2020. *Model Diagnostics*. [Online] Available at: https://bookdown.org/egarpor/PM-UC3M/glm-diagnostics.html [Accessed 21 December 2020].
+
+Ross, N., 2020. *Generalised Additive Models*. [Online] Available at: https://noamross.github.io/gams-in-r-course/ [Accessed 20 December 2020].
+
+Rouse, M., 2019. *Data Quality*. [Online] Available at: https://searchdatamanagement.techtarget.com/definition/data-quality [Accessed 19 November 2020].
+
+Saraswat, M., 2020. *Practical Guide to Logistic Regression Analysis in R*. [Online] Available at: https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/logistic-regression-analysis-r/tutorial/ [Accessed 29 December 2020].
+
+Sirohi, K., 2018. *Simply Explained Logistic Regression with Example in R*. [Online] Available at: https://towardsdatascience.com/simply-explained-logistic-regression-with-example-in-r-b919acb1d6b3 [Accessed 03 December 2020].
+
+Thewissen, S., Nolan, B. & Roser, M., 2015. *Incomes across the Distribution*. [Online] Available at: https://ourworldindata.org/incomes-across-distribution [Accessed 01 December 2020].
+
+Tranmer, M. & Elliot, M., 2008. *Multiple Linear Regression*. [Online] Available at: https://hummedia.manchester.ac.uk/institutes/cmist/archive-publications/working-papers/2008/2008-19-multiple-linear-regression.pdf [Accessed 20 December 2020].
+
+United Nations, 2000. Glossary of Terms on Statistical Data Editing. *United Nations Statistical Commission and Economic Commission for Economic*.
